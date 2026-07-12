@@ -1,0 +1,81 @@
+{
+  "manifest_version": 3,
+  "name": "Papertrail - Auto Invoice Scraper",
+  "version": "1.0.0",
+  "description": "Automatically capture and organize invoices from AWS, Vercel, OpenAI, and more.",
+  "action": {
+    "default_popup": "src/popup/index.html"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "service-worker-loader.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "assets/aws-billing.ts-loader-Co_0ej3n.js"
+      ],
+      "matches": [
+        "https://*.console.aws.amazon.com/*"
+      ]
+    },
+    {
+      "js": [
+        "assets/vercel-billing.ts-loader-BdXGFyOo.js"
+      ],
+      "matches": [
+        "https://vercel.com/*"
+      ]
+    },
+    {
+      "js": [
+        "assets/openai-billing.ts-loader-CI9lR6Fx.js"
+      ],
+      "matches": [
+        "https://platform.openai.com/*"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "https://*.console.aws.amazon.com/*"
+      ],
+      "resources": [
+        "assets/utils-D6M6QJTQ.js",
+        "assets/aws-billing.ts-1l6Djr7q.js"
+      ],
+      "use_dynamic_url": false
+    },
+    {
+      "matches": [
+        "https://vercel.com/*"
+      ],
+      "resources": [
+        "assets/utils-D6M6QJTQ.js",
+        "assets/vercel-billing.ts-BC-Cs8Uy.js"
+      ],
+      "use_dynamic_url": false
+    },
+    {
+      "matches": [
+        "https://platform.openai.com/*"
+      ],
+      "resources": [
+        "assets/utils-D6M6QJTQ.js",
+        "assets/openai-billing.ts-CqYGy8Ya.js"
+      ],
+      "use_dynamic_url": false
+    }
+  ]
+}

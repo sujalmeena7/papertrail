@@ -1,0 +1,17 @@
+model_list:
+  # This makes Claude Code use GLM 5.2 as its default "Opus"
+  - model_name: claude-opus-4-8
+    litellm_params:
+      model: openai/z-ai/glm-5.2
+      api_base: https://api.bluesminds.com/v1
+      api_key: os.environ/BLUESMINDS_API_KEY
+
+  # This makes Claude Code use GPT 5.5 if you switch to "Sonnet"
+  - model_name: claude-sonnet-5
+    litellm_params:
+      model: openai/gpt-5.5
+      api_base: https://api.bluesminds.com/v1
+      api_key: os.environ/BLUESMINDS_API_KEY
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

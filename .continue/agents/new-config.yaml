@@ -1,0 +1,25 @@
+name: Bluesminds Config
+version: 1.0.0
+schema: v1
+
+models:
+  - name: GPT 5.5
+    provider: openai
+    model: gpt-5.5
+    apiKey: sk-XqETitQCsmgPfhISgYN5Znm5c7b6N2uS8ZWs4nSZEWOuKrU3
+    apiBase: https://api.bluesminds.com/v1/
+    roles:
+      - chat
+      - edit
+      - apply
+      - autocomplete
+
+  - name: GLM 5.2
+    provider: openai
+    model: z-ai/glm-5.2
+    apiKey: sk-XqETitQCsmgPfhISgYN5Znm5c7b6N2uS8ZWs4nSZEWOuKrU3
+    apiBase: https://api.bluesminds.com/v1/
+    roles:
+      - chat
+      - edit
+      - apply

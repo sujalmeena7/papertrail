@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx drizzle-kit *)",
+      "Bash(npm run *)",
+      "Bash(echo \"dev server launching, pid $!\")",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(./node_modules/.bin/vite build *)",
+      "Bash(pnpm list *)",
+      "Bash(npx --version)",
+      "Bash(npx --yes tsx --version)",
+      "Bash(pnpm dlx *)"
+    ]
+  }
+}

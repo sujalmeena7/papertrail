@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Papertrail - Auto Invoice Scraper",
+  "version": "1.0.0",
+  "description": "Automatically capture and organize invoices from AWS, Vercel, OpenAI, and more.",
+  "action": {
+    "default_popup": "src/popup/index.html"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "src/background/index.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.console.aws.amazon.com/*"],
+      "js": ["src/content-scripts/aws-billing.ts"]
+    },
+    {
+      "matches": ["https://vercel.com/*"],
+      "js": ["src/content-scripts/vercel-billing.ts"]
+    },
+    {
+      "matches": ["https://platform.openai.com/*"],
+      "js": ["src/content-scripts/openai-billing.ts"]
+    }
+  ]
+}
