@@ -2,6 +2,7 @@ import { randomUUID, createHash } from "crypto"
 import { db } from "@/lib/db"
 import { deviceTokens, receipts } from "@/lib/db/schema"
 import { normalizeVendor } from "@/lib/pipeline/normalize"
+import { checkRateLimit } from "@/lib/rate-limit"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
 
@@ -51,6 +52,14 @@ export async function POST(request: Request) {
     .limit(1)
   if (!device) {
     return Response.json({ error: "Invalid device token" }, { status: 401 })
+  }
+
+  const rateLimit = checkRateLimit(tokenHash)
+  if (!rateLimit.allowed) {
+    return Response.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } },
+    )
   }
 
   let body: unknown

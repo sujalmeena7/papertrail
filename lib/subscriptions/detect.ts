@@ -106,6 +106,28 @@ export async function analyzeSubscriptions(userId: string) {
 
   const activeSubKeys = new Set<string>()
 
+  // 3b. Fetch all non-dismissed alerts once, up front, to avoid per-item
+  // lookups inside the loops below (price_hike/missed_renewal/zombie are
+  // keyed by subscriptionId+type; redundant_tool is keyed by category).
+  const existingAlertsList = await db.query.subscriptionAlerts.findMany({
+    where: and(eq(subscriptionAlerts.userId, userId), eq(subscriptionAlerts.dismissed, false)),
+  })
+  const alertTypesBySubscription = new Map<string, Set<string>>()
+  const redundantToolCategories = new Set<string>()
+  for (const a of existingAlertsList) {
+    if (a.subscriptionId) {
+      if (!alertTypesBySubscription.has(a.subscriptionId)) {
+        alertTypesBySubscription.set(a.subscriptionId, new Set())
+      }
+      alertTypesBySubscription.get(a.subscriptionId)!.add(a.type)
+    }
+    if (a.type === "redundant_tool") {
+      const category = (a.details as any)?.category
+      if (category) redundantToolCategories.add(category)
+    }
+  }
+  const newAlerts: (typeof subscriptionAlerts.$inferInsert)[] = []
+
   // 4. Analyze each group
   for (const [key, groupReceipts] of groups.entries()) {
     if (groupReceipts.length < 2) continue // Need at least 2 to detect cadence
@@ -211,16 +233,10 @@ export async function analyzeSubscriptions(userId: string) {
       const pctIncrease = Math.round(
         ((currentAmountCents - previousAmountCents) / previousAmountCents) * 100
       )
-      const existingAlert = await db.query.subscriptionAlerts.findFirst({
-        where: and(
-          eq(subscriptionAlerts.subscriptionId, subId!),
-          eq(subscriptionAlerts.type, "price_hike"),
-          eq(subscriptionAlerts.dismissed, false)
-        ),
-      })
+      const hasExistingAlert = alertTypesBySubscription.get(subId!)?.has("price_hike")
 
-      if (!existingAlert) {
-        await db.insert(subscriptionAlerts).values({
+      if (!hasExistingAlert) {
+        newAlerts.push({
           id: randomUUID(),
           userId,
           subscriptionId: subId!,
@@ -242,16 +258,10 @@ export async function analyzeSubscriptions(userId: string) {
       (now.getTime() - nextExpected.getTime()) / (1000 * 60 * 60 * 24)
 
     if (daysOverdue > 7) {
-      const existingAlert = await db.query.subscriptionAlerts.findFirst({
-        where: and(
-          eq(subscriptionAlerts.subscriptionId, subId!),
-          eq(subscriptionAlerts.type, "missed_renewal"),
-          eq(subscriptionAlerts.dismissed, false)
-        ),
-      })
+      const hasExistingAlert = alertTypesBySubscription.get(subId!)?.has("missed_renewal")
 
-      if (!existingAlert) {
-        await db.insert(subscriptionAlerts).values({
+      if (!hasExistingAlert) {
+        newAlerts.push({
           id: randomUUID(),
           userId,
           subscriptionId: subId!,
@@ -304,7 +314,7 @@ export async function analyzeSubscriptions(userId: string) {
       if (allSimilar) {
         // Only create one duplicate alert per vendor (avoid spamming)
         if (!vendorsWithDuplicateAlert.has(vendorNormalized)) {
-          await db.insert(subscriptionAlerts).values({
+          newAlerts.push({
             id: randomUUID(),
             userId,
             subscriptionId: null, // global alert, not tied to one subscription row
@@ -358,31 +368,8 @@ export async function analyzeSubscriptions(userId: string) {
 
   for (const [category, categorySubs] of subsByCategory.entries()) {
     if (categorySubs.length > 1) {
-      const existingAlert = await db.query.subscriptionAlerts.findFirst({
-        where: and(
-          eq(subscriptionAlerts.userId, userId),
-          eq(subscriptionAlerts.type, "redundant_tool"),
-          eq(subscriptionAlerts.dismissed, false)
-        )
-      })
-
-      // We might have multiple alerts for different categories, so check details
-      // Wait, we can't easily query JSON details in Drizzle without raw SQL,
-      // so let's just fetch all redundant_tool alerts and find if one exists for this category.
-      const allRedundantAlerts = await db.query.subscriptionAlerts.findMany({
-        where: and(
-          eq(subscriptionAlerts.userId, userId),
-          eq(subscriptionAlerts.type, "redundant_tool"),
-          eq(subscriptionAlerts.dismissed, false)
-        )
-      })
-
-      const hasAlertForCategory = allRedundantAlerts.some(
-        a => (a.details as any)?.category === category
-      )
-
-      if (!hasAlertForCategory) {
-        await db.insert(subscriptionAlerts).values({
+      if (!redundantToolCategories.has(category)) {
+        newAlerts.push({
           id: randomUUID(),
           userId,
           subscriptionId: null,
@@ -427,22 +414,16 @@ export async function analyzeSubscriptions(userId: string) {
     }
 
     if (isZombie) {
-      const existingAlert = await db.query.subscriptionAlerts.findFirst({
-        where: and(
-          eq(subscriptionAlerts.subscriptionId, sub.id),
-          eq(subscriptionAlerts.type, "zombie"),
-          eq(subscriptionAlerts.dismissed, false)
-        )
-      })
+      const hasExistingAlert = alertTypesBySubscription.get(sub.id)?.has("zombie")
 
-      if (!existingAlert) {
+      if (!hasExistingAlert) {
         // Severity based on cost
         let severity = "info"
         const cost = sub.averageAmountCents
         if (cost > 5000) severity = "critical" // > $50
         else if (cost > 2000) severity = "warning" // > $20
 
-        await db.insert(subscriptionAlerts).values({
+        newAlerts.push({
           id: randomUUID(),
           userId,
           subscriptionId: sub.id,
@@ -455,5 +436,9 @@ export async function analyzeSubscriptions(userId: string) {
         })
       }
     }
+  }
+
+  if (newAlerts.length > 0) {
+    await db.insert(subscriptionAlerts).values(newAlerts)
   }
 }
