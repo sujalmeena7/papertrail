@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto"
 import {
   pgTable,
   text,
@@ -280,6 +281,32 @@ export const subscriptionUsage = pgTable("subscription_usage", {
   index("subscription_usage_subscriptionId_idx").on(t.subscriptionId),
 ])
 
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }).unique(),
+  renewalAlertsEnabled: boolean("renewal_alerts_enabled").notNull().default(true),
+  renewalAlertDaysBefore: integer("renewal_alert_days_before").notNull().default(3),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+})
+
+export const sentNotifications = pgTable(
+  "sent_notifications",
+  {
+    id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    subscriptionId: text("subscription_id").notNull().references(() => subscriptions.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    sentAt: timestamp("sent_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("sent_notifications_user_id_idx").on(table.userId),
+    index("sent_notifications_dedupe_idx").on(table.subscriptionId, table.type, table.sentAt),
+  ]
+)
+
 export type BankConnection = typeof bankConnections.$inferSelect
 export type BankTransaction = typeof bankTransactions.$inferSelect
 export type SubscriptionUsage = typeof subscriptionUsage.$inferSelect
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect
+export type SentNotification = typeof sentNotifications.$inferSelect

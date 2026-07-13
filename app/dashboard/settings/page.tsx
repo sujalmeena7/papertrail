@@ -1,6 +1,7 @@
 import { getDeviceTokens } from "@/app/actions/device-tokens"
 import { DeviceTokensCard } from "@/components/device-tokens-card"
 import { GmailCard } from "@/components/gmail-card"
+import { NotificationPreferencesCard } from "@/components/notification-preferences-card"
 import { db } from "@/lib/db"
 import { gmailConnections } from "@/lib/db/schema"
 import { isGmailConfigured } from "@/lib/pipeline/sources/gmail"
@@ -33,6 +34,7 @@ export default async function SettingsPage() {
       </div>
       <GmailCard configured={isGmailConfigured()} connection={connection ?? null} />
       <BankConnectionCard connections={bankConns} />
+      <NotificationPreferencesCard />
       <DeviceTokensCard tokens={tokens} />
     </div>
   )
