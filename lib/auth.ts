@@ -20,6 +20,12 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
   },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ['google'],
+    },
+  },
   trustedOrigins: [
     ...(process.env.NODE_ENV === 'development'
       ? ['http://localhost:3000']
