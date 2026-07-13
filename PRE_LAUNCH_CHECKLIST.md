@@ -18,7 +18,12 @@ Currently `EMAIL_FROM` uses Resend's shared test domain (`onboarding@resend.dev`
 
 `vercel.json` already has the cron config:
 ```json
-{ "crons": [{ "path": "/api/cron/renewal-alerts", "schedule": "0 13 * * *" }] }
+{
+  "crons": [
+    { "path": "/api/cron/renewal-alerts", "schedule": "0 13 * * *" },
+    { "path": "/api/cron/weekly-digest", "schedule": "0 13 * * 1" }
+  ]
+}
 ```
 This does nothing until the project is actually deployed to Vercel — crons only register/run on a live deployment (and typically only fire against Production, not preview deployments).
 
@@ -33,7 +38,8 @@ This does nothing until the project is actually deployed to Vercel — crons onl
 
 ## After deploying
 
-Manually trigger the cron route once against production to confirm it works before waiting for the schedule:
+Manually trigger each cron route once against production to confirm it works before waiting for the schedule:
 ```
 curl -H "Authorization: Bearer <real CRON_SECRET>" https://<your-domain>/api/cron/renewal-alerts
+curl -H "Authorization: Bearer <real CRON_SECRET>" https://<your-domain>/api/cron/weekly-digest
 ```
