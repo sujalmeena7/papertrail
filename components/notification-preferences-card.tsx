@@ -28,6 +28,7 @@ import { toast } from "sonner"
 type Prefs = {
   renewalAlertsEnabled: boolean
   renewalAlertDaysBefore: number
+  weeklyDigestEnabled: boolean
 }
 
 export function NotificationPreferencesCard() {
@@ -125,6 +126,21 @@ export function NotificationPreferencesCard() {
                 </Select>
               </div>
             )}
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium">Weekly money-leak digest</span>
+                <span className="text-xs text-muted-foreground">
+                  A weekly email summarizing wasted spend across your subscriptions
+                </span>
+              </div>
+              <Switch
+                checked={prefs.weeklyDigestEnabled}
+                onCheckedChange={(checked) => {
+                  setPrefs({ ...prefs, weeklyDigestEnabled: checked })
+                  setDirty(true)
+                }}
+              />
+            </div>
           </>
         )}
       </CardContent>

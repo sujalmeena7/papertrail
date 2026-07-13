@@ -6,6 +6,7 @@ import { notificationPreferences } from "@/lib/db/schema"
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const token = searchParams.get("token")
+  const type = searchParams.get("type") === "digest" ? "digest" : "renewal"
 
   if (!token) {
     return new NextResponse(invalidHtml, {
@@ -22,21 +23,20 @@ export async function GET(request: Request) {
     })
   }
 
+  const update =
+    type === "digest"
+      ? { weeklyDigestEnabled: false }
+      : { renewalAlertsEnabled: false }
+
   await db
     .insert(notificationPreferences)
-    .values({
-      userId,
-      renewalAlertsEnabled: false,
-    })
+    .values({ userId, ...update })
     .onConflictDoUpdate({
       target: notificationPreferences.userId,
-      set: {
-        renewalAlertsEnabled: false,
-        updatedAt: new Date(),
-      },
+      set: { ...update, updatedAt: new Date() },
     })
 
-  return new NextResponse(confirmedHtml, {
+  return new NextResponse(confirmedHtml(type), {
     headers: { "content-type": "text/html" },
   })
 }
@@ -52,13 +52,13 @@ const invalidHtml = `<!DOCTYPE html>
 </body>
 </html>`
 
-const confirmedHtml = `<!DOCTYPE html>
+const confirmedHtml = (type: "digest" | "renewal") => `<!DOCTYPE html>
 <html>
 <head><title>Unsubscribed</title></head>
 <body style="font-family:system-ui,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f6f9fc">
 <div style="background:#fff;padding:32px;border-radius:8px;max-width:400px;text-align:center">
 <h1 style="color:#1a1a2e;font-size:20px">You've been unsubscribed</h1>
-<p style="color:#525f7f">You will no longer receive PaperTrail renewal alert emails. You can re-enable them anytime from your dashboard settings.</p>
+<p style="color:#525f7f">You will no longer receive PaperTrail ${type === "digest" ? "weekly digest" : "renewal alert"} emails. You can re-enable them anytime from your dashboard settings.</p>
 </div>
 </body>
 </html>`

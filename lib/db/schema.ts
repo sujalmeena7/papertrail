@@ -286,6 +286,8 @@ export const notificationPreferences = pgTable("notification_preferences", {
   userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }).unique(),
   renewalAlertsEnabled: boolean("renewal_alerts_enabled").notNull().default(true),
   renewalAlertDaysBefore: integer("renewal_alert_days_before").notNull().default(3),
+  weeklyDigestEnabled: boolean("weekly_digest_enabled").notNull().default(true),
+  lastDigestSentAt: timestamp("last_digest_sent_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })

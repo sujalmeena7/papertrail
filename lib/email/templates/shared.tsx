@@ -16,11 +16,13 @@ export function EmailLayout({
   heading,
   children,
   unsubscribeLink,
+  unsubscribeLabel = "Unsubscribe from renewal alerts",
 }: {
   preview: string
   heading: string
   children: React.ReactNode
   unsubscribeLink?: string
+  unsubscribeLabel?: string
 }) {
   return (
     <Html>
@@ -37,7 +39,7 @@ export function EmailLayout({
           {unsubscribeLink && (
             <Text style={footer}>
               <Link href={unsubscribeLink} style={link}>
-                Unsubscribe from renewal alerts
+                {unsubscribeLabel}
               </Link>
             </Text>
           )}

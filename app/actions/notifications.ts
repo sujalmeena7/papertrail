@@ -19,6 +19,7 @@ export async function getNotificationPreferences() {
     return {
       renewalAlertsEnabled: true,
       renewalAlertDaysBefore: 3,
+      weeklyDigestEnabled: true,
     }
   }
 
@@ -26,12 +27,14 @@ export async function getNotificationPreferences() {
     id: row.id,
     renewalAlertsEnabled: row.renewalAlertsEnabled,
     renewalAlertDaysBefore: row.renewalAlertDaysBefore,
+    weeklyDigestEnabled: row.weeklyDigestEnabled,
   }
 }
 
 export async function updateNotificationPreferences(prefs: {
   renewalAlertsEnabled: boolean
   renewalAlertDaysBefore: number
+  weeklyDigestEnabled: boolean
 }) {
   const userId = await requireUserId()
 
@@ -41,12 +44,14 @@ export async function updateNotificationPreferences(prefs: {
       userId,
       renewalAlertsEnabled: prefs.renewalAlertsEnabled,
       renewalAlertDaysBefore: prefs.renewalAlertDaysBefore,
+      weeklyDigestEnabled: prefs.weeklyDigestEnabled,
     })
     .onConflictDoUpdate({
       target: notificationPreferences.userId,
       set: {
         renewalAlertsEnabled: prefs.renewalAlertsEnabled,
         renewalAlertDaysBefore: prefs.renewalAlertDaysBefore,
+        weeklyDigestEnabled: prefs.weeklyDigestEnabled,
         updatedAt: new Date(),
       },
     })
