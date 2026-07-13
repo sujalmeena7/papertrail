@@ -307,8 +307,39 @@ export const sentNotifications = pgTable(
   ]
 )
 
+// --- Billing (Phase 3) -----------------------------------------------------
+// One row per user tracking their PaperTrail Pro plan. Kept separate from the
+// Better Auth `user` table to avoid coupling. Price/currency live in the
+// Razorpay Plan (INR ₹999/mo), not here.
+
+export const billing = pgTable("billing", {
+  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }).unique(),
+  plan: text("plan").notNull().default("free"), // 'free' | 'pro'
+  status: text("status").notNull().default("none"), // 'none' | 'active' | 'past_due' | 'cancelled'
+  razorpayCustomerId: text("razorpay_customer_id"),
+  razorpaySubscriptionId: text("razorpay_subscription_id"),
+  currentPeriodEnd: timestamp("current_period_end"), // pro persists until this passes even if cancelled
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => [
+  index("billing_user_id_idx").on(t.userId),
+])
+
+// Idempotency ledger for Razorpay webhook events — dedupe on the event id so a
+// redelivered webhook is processed exactly once.
+export const billingEvents = pgTable("billing_events", {
+  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  eventId: text("event_id").notNull().unique(),
+  type: text("type").notNull(),
+  payload: jsonb("payload").notNull(),
+  processedAt: timestamp("processed_at").notNull().defaultNow(),
+})
+
 export type BankConnection = typeof bankConnections.$inferSelect
 export type BankTransaction = typeof bankTransactions.$inferSelect
 export type SubscriptionUsage = typeof subscriptionUsage.$inferSelect
 export type NotificationPreferences = typeof notificationPreferences.$inferSelect
 export type SentNotification = typeof sentNotifications.$inferSelect
+export type Billing = typeof billing.$inferSelect
+export type BillingEvent = typeof billingEvents.$inferSelect

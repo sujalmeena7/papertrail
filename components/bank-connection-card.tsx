@@ -9,14 +9,23 @@ import { Badge } from "@/components/ui/badge"
 import { disconnectBank, syncBankTransactions } from "@/app/actions/bank"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import type { Plan } from "@/lib/billing/plan"
+import { LockedOverlay } from "@/components/locked-overlay"
 
-export function BankConnectionCard({ connections }: { connections: any[] }) {
+export function BankConnectionCard({
+  connections,
+  plan,
+}: {
+  connections: any[]
+  plan: Plan
+}) {
   const router = useRouter()
   const [linkToken, setLinkToken] = useState<string | null>(null)
   const [isSyncing, setIsSyncing] = useState<Record<string, boolean>>({})
   const [isDisconnecting, setIsDisconnecting] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
+    if (plan !== "pro") return
     async function createToken() {
       try {
         const res = await fetch("/api/plaid/create-link-token", { method: "POST" })
@@ -27,7 +36,7 @@ export function BankConnectionCard({ connections }: { connections: any[] }) {
       }
     }
     createToken()
-  }, [])
+  }, [plan])
 
   const onSuccess = useCallback(async (public_token: string, metadata: any) => {
     try {
@@ -85,19 +94,30 @@ export function BankConnectionCard({ connections }: { connections: any[] }) {
             <Building2 className="size-4 text-muted-foreground" aria-hidden="true" />
             <CardTitle className="text-base">Bank Connections</CardTitle>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => open()}
-            disabled={!ready || !linkToken}
-          >
-            Connect Bank
-          </Button>
+          {plan === "pro" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => open()}
+              disabled={!ready || !linkToken}
+            >
+              Connect Bank
+            </Button>
+          )}
         </div>
         <CardDescription className="leading-relaxed">
           Link your bank account to automatically find stealth subscriptions that don't send email receipts.
         </CardDescription>
       </CardHeader>
+      {plan !== "pro" && (
+        <CardContent>
+          <LockedOverlay
+            title="Bank linking is a Pro feature"
+            description="Link a bank account to automatically catch recurring charges with no matching email receipt."
+          />
+        </CardContent>
+      )}
+      {plan === "pro" && (
       <CardContent className="flex flex-col gap-3">
         {connections.length === 0 ? (
           <p className="text-sm text-muted-foreground">No bank accounts connected.</p>
@@ -153,6 +173,7 @@ export function BankConnectionCard({ connections }: { connections: any[] }) {
           </ul>
         )}
       </CardContent>
+      )}
     </Card>
   )
 }

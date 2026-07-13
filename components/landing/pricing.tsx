@@ -1,50 +1,39 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { PRO_PRICE } from '@/lib/billing/pricing'
 
 const plans = [
   {
-    name: 'Solo',
-    price: '$15',
+    name: 'Free',
+    price: '$0',
     period: '/mo',
-    description: 'For freelancers who never want to forward a receipt again.',
+    description: 'Scan every inbox and see exactly what your subscriptions are costing you.',
     features: [
-      '1 Gmail inbox',
-      '15 SaaS portals',
-      'Monthly Drive / Dropbox export',
-      'CSV summary for your accountant',
+      'Unlimited Gmail scanning',
+      'Full spend analytics & trend chart',
+      'Total savings + leak count, always visible',
+      'Top money leak in full detail',
     ],
     featured: false,
-    cta: 'Start free trial',
+    cta: 'Get started free',
   },
   {
-    name: 'Studio',
-    price: '$29',
+    name: 'Pro',
+    price: PRO_PRICE.usd,
     period: '/mo',
-    description: 'For agencies and small teams with real bookkeeping to feed.',
+    note: PRO_PRICE.inrNote,
+    description: 'Unlock every leak and act on it in one click.',
     features: [
-      '3 inboxes, unlimited portals',
-      'Multi-entity organization',
-      'QuickBooks & Xero sync',
-      'Priority extraction queue',
-      'Bookkeeper share links',
+      'Every money leak, fully broken down',
+      'One-click cancellation links',
+      'Renewal alert emails',
+      'Full weekly digest (not just a teaser)',
+      'Bank-linked stealth subscription detection',
+      'CSV export',
     ],
     featured: true,
-    cta: 'Start free trial',
-  },
-  {
-    name: 'Firm',
-    price: '$79',
-    period: '/mo',
-    description: 'For accountants managing receipts across many clients.',
-    features: [
-      'Unlimited client workspaces',
-      'White-label client portal',
-      'Bulk export & audit trail',
-      'Dedicated support',
-    ],
-    featured: false,
-    cta: 'Talk to us',
+    cta: 'Upgrade to Pro',
   },
 ]
 
@@ -58,17 +47,17 @@ export function Pricing() {
               Pricing
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-balance md:text-5xl">
-              Cheaper than one hour
+              See the leak for free.
               <br />
-              of your bookkeeper.
+              Fix it for {PRO_PRICE.usd}/mo.
             </h2>
           </div>
           <p className="max-w-xs font-mono text-[10px] leading-relaxed tracking-wider text-muted-foreground uppercase md:text-xs">
-            14-day free trial &middot; No card required &middot; Cancel anytime
+            No card required for Free &middot; Cancel Pro anytime
           </p>
         </div>
 
-        <div className="grid gap-px bg-border md:grid-cols-3">
+        <div className="grid gap-px bg-border md:grid-cols-2">
           {plans.map((plan, i) => (
             <motion.article
               key={plan.name}
@@ -98,6 +87,15 @@ export function Pricing() {
                   {plan.period}
                 </span>
               </p>
+              {plan.note && (
+                <p
+                  className={`mt-1 text-xs ${
+                    plan.featured ? 'text-background/60' : 'text-muted-foreground'
+                  }`}
+                >
+                  {plan.note}
+                </p>
+              )}
               <p
                 className={`mt-4 text-sm leading-relaxed ${
                   plan.featured ? 'text-background/70' : 'text-muted-foreground'
@@ -114,7 +112,7 @@ export function Pricing() {
                 ))}
               </ul>
               <a
-                href="#"
+                href="/sign-up"
                 className={`mt-10 flex items-center justify-center gap-2 px-6 py-4 text-xs font-bold tracking-widest uppercase transition-colors ${
                   plan.featured
                     ? 'bg-primary text-primary-foreground hover:bg-background hover:text-foreground'

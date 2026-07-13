@@ -1,8 +1,28 @@
 "use client"
 
 import { AlertTriangle, Eye, EyeOff } from "lucide-react"
+import { LockedOverlay } from "@/components/locked-overlay"
 
-export function StealthSubscriptions({ transactions }: { transactions: any[] }) {
+export function StealthSubscriptions({
+  transactions,
+  locked = false,
+  lockedCount = 0,
+}: {
+  transactions: any[]
+  locked?: boolean
+  lockedCount?: number
+}) {
+  if (locked && lockedCount > 0) {
+    return (
+      <div className="py-8">
+        <LockedOverlay
+          title={`${lockedCount} stealth subscription${lockedCount === 1 ? "" : "s"} found`}
+          description="Recurring bank charges with no matching email receipt. Upgrade to Pro to see which merchants and how much."
+        />
+      </div>
+    )
+  }
+
   if (transactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-24 text-center rounded-2xl border border-dashed border-border/60">

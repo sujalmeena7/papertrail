@@ -1,12 +1,13 @@
 "use client"
 
-import type { Subscription, SubscriptionAlert } from "@/lib/db/schema"
-import { identifyCandidates } from "@/lib/subscriptions/savings"
+import type { SavingsCandidate } from "@/lib/subscriptions/savings"
+import type { Plan } from "@/lib/billing/plan"
 import { cancelSubscription } from "@/app/actions/subscriptions"
 import { Scissors, Sparkles, TrendingUp, CalendarX, Copy, XCircle, Layers, Ghost } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { LockedOverlay } from "@/components/locked-overlay"
 
 function formatAmount(cents: number, currency: string = "USD"): string {
   return (cents / 100).toLocaleString("en-US", {
@@ -54,18 +55,26 @@ const REASON_CONFIG: Record<string, { icon: React.ReactNode; color: string; bg: 
 }
 
 export function SavingsCalculator({
-  subscriptions,
-  alerts,
+  plan,
+  totalSavings,
+  lockedSavings,
+  candidates,
+  lockedCount,
 }: {
-  subscriptions: Subscription[]
-  alerts: SubscriptionAlert[]
+  plan: Plan
+  totalSavings: number
+  lockedSavings: number
+  candidates: SavingsCandidate[]
+  lockedCount: number
 }) {
-  const candidates = identifyCandidates(subscriptions, alerts)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [isPending, startTransition] = useTransition()
 
   const visibleCandidates = candidates.filter((c) => !dismissed.has(c.subscription.id))
-  const totalPotentialSavings = visibleCandidates.reduce((sum, c) => sum + c.potentialSavings, 0)
+  const dismissedAmount = candidates
+    .filter((c) => dismissed.has(c.subscription.id))
+    .reduce((sum, c) => sum + c.potentialSavings, 0)
+  const displayedTotal = totalSavings - dismissedAmount
 
   const handleCancel = (id: string, vendor: string) => {
     startTransition(async () => {
@@ -83,7 +92,7 @@ export function SavingsCalculator({
     setDismissed((prev) => new Set(prev).add(id))
   }
 
-  if (visibleCandidates.length === 0) {
+  if (candidates.length === 0 && lockedCount === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-24 text-center rounded-2xl border border-dashed border-border/60">
         <div className="flex size-16 items-center justify-center rounded-2xl bg-emerald-500/10">
@@ -101,7 +110,7 @@ export function SavingsCalculator({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Savings hero banner */}
+      {/* Savings hero banner — always shows the FULL number, even for free users */}
       <div
         className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-6 py-5"
         style={{
@@ -117,13 +126,13 @@ export function SavingsCalculator({
             <p className="text-2xl font-bold tracking-tight">
               Save up to{" "}
               <span className="text-emerald-500">
-                {formatAmount(totalPotentialSavings, "USD")}
+                {formatAmount(displayedTotal, "USD")}
               </span>
               <span className="text-base font-normal text-muted-foreground">/mo</span>
             </p>
             <p className="text-sm text-muted-foreground mt-0.5">
-              by reviewing {visibleCandidates.length} subscription
-              {visibleCandidates.length === 1 ? "" : "s"} below
+              across {visibleCandidates.length + lockedCount} subscription
+              {visibleCandidates.length + lockedCount === 1 ? "" : "s"} we found
             </p>
           </div>
         </div>
@@ -131,7 +140,7 @@ export function SavingsCalculator({
 
       {/* Count */}
       <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        {visibleCandidates.length} Recommendation{visibleCandidates.length !== 1 ? "s" : ""}
+        {candidates.length} Recommendation{candidates.length !== 1 ? "s" : ""}
       </p>
 
       {/* Candidates */}
@@ -191,6 +200,14 @@ export function SavingsCalculator({
           </div>
         )
       })}
+
+      {/* Locked candidates — free plan only */}
+      {lockedCount > 0 && (
+        <LockedOverlay
+          title={`${lockedCount} more leak${lockedCount === 1 ? "" : "s"} worth ${formatAmount(lockedSavings, "USD")}/mo`}
+          description="Upgrade to Pro to see every leak, one-click cancel links, and get alerted the moment a new one appears."
+        />
+      )}
     </div>
   )
 }

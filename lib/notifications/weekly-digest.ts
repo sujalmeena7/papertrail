@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
+  billing,
   notificationPreferences,
   subscriptionAlerts,
   subscriptions,
@@ -12,6 +13,7 @@ import { identifyCandidates } from "@/lib/subscriptions/savings"
 import { createUnsubscribeToken } from "@/lib/email/unsubscribe-token"
 import { sendEmail } from "@/lib/email/client"
 import { WeeklyDigestEmail } from "@/lib/email/templates/weekly-digest"
+import { resolvePlan } from "@/lib/billing/plan"
 
 const DIGEST_INTERVAL_DAYS = 6
 const MAX_CANDIDATES_IN_EMAIL = 5
@@ -28,9 +30,12 @@ export async function sendWeeklyDigests(): Promise<{
       userEmail: user.email,
       weeklyDigestEnabled: notificationPreferences.weeklyDigestEnabled,
       lastDigestSentAt: notificationPreferences.lastDigestSentAt,
+      billingStatus: billing.status,
+      billingCurrentPeriodEnd: billing.currentPeriodEnd,
     })
     .from(user)
     .leftJoin(notificationPreferences, eq(user.id, notificationPreferences.userId))
+    .leftJoin(billing, eq(user.id, billing.userId))
 
   const activeSubs = await db
     .select()
@@ -88,6 +93,11 @@ export async function sendWeeklyDigests(): Promise<{
     )
     const currency = candidates[0].subscription.currency
 
+    const plan = resolvePlan({
+      status: u.billingStatus ?? "none",
+      currentPeriodEnd: u.billingCurrentPeriodEnd ?? null,
+    })
+
     const token = createUnsubscribeToken(u.userId)
     const unsubscribeUrl = `${APP_URL}/api/email/unsubscribe?token=${token}&type=digest`
     const dashboardUrl = `${APP_URL}/dashboard`
@@ -97,15 +107,20 @@ export async function sendWeeklyDigests(): Promise<{
         to: u.userEmail,
         subject: `You could save on ${candidates.length} subscription${candidates.length === 1 ? "" : "s"} this week`,
         react: WeeklyDigestEmail({
-          candidates: candidates.slice(0, MAX_CANDIDATES_IN_EMAIL).map((c) => ({
-            vendorName: c.subscription.vendorNormalized,
-            reason: c.reason,
-            amountCents: c.potentialSavings,
-          })),
+          candidates:
+            plan === "pro"
+              ? candidates.slice(0, MAX_CANDIDATES_IN_EMAIL).map((c) => ({
+                  vendorName: c.subscription.vendorNormalized,
+                  reason: c.reason,
+                  amountCents: c.potentialSavings,
+                }))
+              : [],
+          candidateCount: candidates.length,
           totalMonthlyCents,
           currency,
           dashboardUrl,
           unsubscribeUrl,
+          teaser: plan !== "pro",
         }),
       })
 

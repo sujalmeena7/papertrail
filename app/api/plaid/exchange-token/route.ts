@@ -1,4 +1,5 @@
 import { requireUserId } from "@/lib/session"
+import { requirePro } from "@/lib/billing/plan"
 import { plaidClient } from "@/lib/plaid/client"
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
@@ -9,6 +10,7 @@ import { encrypt } from "@/lib/encryption"
 export async function POST(request: Request) {
   try {
     const userId = await requireUserId()
+    await requirePro(userId)
     const { public_token, institution_id, institution_name } = await request.json()
 
     if (!public_token) {
@@ -48,9 +50,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, connectionId: id })
   } catch (error) {
     console.error("Failed to exchange Plaid token:", error)
+    const status = error instanceof Error && error.message === "Upgrade required" ? 402 : 500
     return NextResponse.json(
-      { error: "Failed to exchange token" },
-      { status: 500 }
+      { error: status === 402 ? "Upgrade required" : "Failed to exchange token" },
+      { status }
     )
   }
 }

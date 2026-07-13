@@ -11,19 +11,47 @@ function formatAmount(cents: number, currency: string = "USD"): string {
 
 export function WeeklyDigestEmail({
   candidates,
+  candidateCount,
   totalMonthlyCents,
   currency = "USD",
   dashboardUrl,
   unsubscribeUrl,
+  teaser = false,
 }: {
   candidates: { vendorName: string; reason: string; amountCents: number }[]
+  candidateCount?: number
   totalMonthlyCents: number
   currency?: string
   dashboardUrl: string
   unsubscribeUrl: string
+  teaser?: boolean
 }) {
+  const count = candidateCount ?? candidates.length
   const totalFormatted = formatAmount(totalMonthlyCents, currency)
-  const preview = `You could save ${totalFormatted}/mo across ${candidates.length} subscription${candidates.length === 1 ? "" : "s"}`
+  const preview = `You could save ${totalFormatted}/mo across ${count} subscription${count === 1 ? "" : "s"}`
+
+  if (teaser) {
+    return (
+      <EmailLayout
+        preview={preview}
+        heading={`You could save ${totalFormatted}/mo`}
+        unsubscribeLink={unsubscribeUrl}
+        unsubscribeLabel="Unsubscribe from weekly digest"
+      >
+        <Text style={paragraph}>
+          PaperTrail found {count} way{count === 1 ? "" : "s"} to save money in your
+          subscriptions this week — worth {totalFormatted}/mo.
+        </Text>
+        <Text style={paragraph}>
+          Upgrade to Pro to see exactly which subscriptions, why, and get one-click
+          cancellation links.
+        </Text>
+        <Link href={dashboardUrl} style={button}>
+          Upgrade to Pro
+        </Link>
+      </EmailLayout>
+    )
+  }
 
   return (
     <EmailLayout

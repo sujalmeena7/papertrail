@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { receipts } from "@/lib/db/schema"
 import { desc, eq } from "drizzle-orm"
 import { headers } from "next/headers"
+import { isPro } from "@/lib/billing/plan"
 
 function csvEscape(value: string | null | undefined): string {
   if (value == null) return ""
@@ -15,6 +16,10 @@ export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) {
     return new Response("Unauthorized", { status: 401 })
+  }
+
+  if (!(await isPro(session.user.id))) {
+    return new Response("Upgrade to Pro to export CSV", { status: 402 })
   }
 
   const rows = await db

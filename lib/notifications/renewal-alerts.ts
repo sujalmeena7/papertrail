@@ -1,6 +1,7 @@
 import { and, eq, gte, lte, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
+  billing,
   notificationPreferences,
   sentNotifications,
   subscriptions,
@@ -9,6 +10,7 @@ import {
 import { createUnsubscribeToken } from "@/lib/email/unsubscribe-token"
 import { sendEmail } from "@/lib/email/client"
 import { RenewalAlertEmail } from "@/lib/email/templates/renewal-alert"
+import { resolvePlan } from "@/lib/billing/plan"
 
 const DEDUPE_WINDOW_DAYS = 20
 const DEFAULT_ALERT_DAYS_BEFORE = 3
@@ -32,6 +34,8 @@ export async function sendRenewalAlerts(): Promise<{
         notificationPreferences.renewalAlertDaysBefore,
       preferencesEnabled:
         notificationPreferences.renewalAlertsEnabled,
+      billingStatus: billing.status,
+      billingCurrentPeriodEnd: billing.currentPeriodEnd,
     })
     .from(subscriptions)
     .innerJoin(user, eq(subscriptions.userId, user.id))
@@ -39,6 +43,7 @@ export async function sendRenewalAlerts(): Promise<{
       notificationPreferences,
       eq(subscriptions.userId, notificationPreferences.userId),
     )
+    .leftJoin(billing, eq(subscriptions.userId, billing.userId))
     .where(
       and(
         eq(subscriptions.status, "active"),
@@ -81,6 +86,12 @@ export async function sendRenewalAlerts(): Promise<{
 
     // Skip users who explicitly disabled alerts
     if (c.preferencesEnabled === false) {
+      skipped++
+      continue
+    }
+
+    // Renewal alert emails are Pro-only
+    if (resolvePlan({ status: c.billingStatus ?? "none", currentPeriodEnd: c.billingCurrentPeriodEnd ?? null }) !== "pro") {
       skipped++
       continue
     }

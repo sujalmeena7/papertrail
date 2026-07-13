@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/session"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getSubscriptions, getSubscriptionAlerts } from "@/app/actions/subscriptions"
+import { getSubscriptions, getSubscriptionAlerts, getSavingsSummary } from "@/app/actions/subscriptions"
 import { getReceiptsPaginated } from "@/app/actions/receipts"
 import { SubscriptionsTable } from "@/components/subscriptions/subscriptions-table"
 import { AlertsList } from "@/components/subscriptions/alerts-list"
@@ -12,7 +12,8 @@ import { db } from "@/lib/db"
 import { subscriptionUsage, bankTransactions } from "@/lib/db/schema"
 import { StealthSubscriptions } from "@/components/subscriptions/stealth-subscriptions"
 import { UsageTracker } from "@/components/subscriptions/usage-tracker"
-import { eq, and } from "drizzle-orm"
+import { getUserPlan } from "@/lib/billing/plan"
+import { eq, and, sql } from "drizzle-orm"
 import {
   Zap,
   BellRing,
@@ -34,17 +35,37 @@ export default async function SubscriptionsPage() {
   const session = await getSession()
   if (!session?.user) redirect("/sign-in")
 
-  const [subscriptions, alerts, paginated, usages, stealthTxs] = await Promise.all([
+  const plan = await getUserPlan(session.user.id)
+
+  // Stealth-subscription detection is Pro-only. Free users only ever get a
+  // count (an upgrade hook) — the actual merchant/transaction detail is never
+  // fetched, so it can't leak into the client bundle via props.
+  const stealthWhere = and(
+    eq(bankTransactions.userId, session.user.id),
+    eq(bankTransactions.isStealthSubscription, true)
+  )
+  const stealthQuery =
+    plan === "pro"
+      ? db.query.bankTransactions
+          .findMany({ where: stealthWhere })
+          .then((transactions) => ({ locked: false as const, transactions, count: transactions.length }))
+      : db
+          .select({ count: sql<number>`count(*)` })
+          .from(bankTransactions)
+          .where(stealthWhere)
+          .then(([row]) => ({
+            locked: true as const,
+            transactions: [] as (typeof bankTransactions.$inferSelect)[],
+            count: Number(row?.count ?? 0),
+          }))
+
+  const [subscriptions, alerts, paginated, usages, savings, stealth] = await Promise.all([
     getSubscriptions(),
     getSubscriptionAlerts(),
     getReceiptsPaginated(0),
     db.query.subscriptionUsage.findMany({ where: eq(subscriptionUsage.userId, session.user.id) }),
-    db.query.bankTransactions.findMany({
-      where: and(
-        eq(bankTransactions.userId, session.user.id),
-        eq(bankTransactions.isStealthSubscription, true)
-      ),
-    }),
+    getSavingsSummary(),
+    stealthQuery,
   ])
 
   const activeCount = subscriptions.filter((s) => s.status === "active").length
@@ -128,9 +149,9 @@ export default async function SubscriptionsPage() {
             >
               <Eye className="size-4 opacity-70 group-data-[state=active]:opacity-100" />
               Stealth
-              {stealthTxs.length > 0 && (
+              {stealth.count > 0 && (
                 <span className="ml-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500/20 px-1 text-[10px] font-bold text-amber-500">
-                  {stealthTxs.length}
+                  {stealth.count}
                 </span>
               )}
             </TabsTrigger>
@@ -150,13 +171,19 @@ export default async function SubscriptionsPage() {
         {/* Content area */}
         <div className="w-full">
           <TabsContent value="active" className="mt-0">
-            <SubscriptionsTable initialSubscriptions={subscriptions} />
+            <SubscriptionsTable initialSubscriptions={subscriptions} plan={plan} />
           </TabsContent>
           <TabsContent value="alerts" className="mt-0">
             <AlertsList initialAlerts={alerts} />
           </TabsContent>
           <TabsContent value="savings" className="mt-0">
-            <SavingsCalculator subscriptions={subscriptions} alerts={alerts} />
+            <SavingsCalculator
+              plan={savings.plan}
+              totalSavings={savings.totalSavings}
+              lockedSavings={savings.lockedSavings}
+              candidates={savings.candidates}
+              lockedCount={savings.lockedCount}
+            />
           </TabsContent>
           <TabsContent value="usage" className="mt-0">
             <UsageTracker
@@ -165,7 +192,11 @@ export default async function SubscriptionsPage() {
             />
           </TabsContent>
           <TabsContent value="bank" className="mt-0">
-            <StealthSubscriptions transactions={stealthTxs} />
+            <StealthSubscriptions
+              transactions={stealth.transactions}
+              locked={stealth.locked}
+              lockedCount={stealth.count}
+            />
           </TabsContent>
           <TabsContent value="all" className="mt-0">
             <ReceiptsTable initialReceipts={paginated.receipts} />

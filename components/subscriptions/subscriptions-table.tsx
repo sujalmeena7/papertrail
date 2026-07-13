@@ -1,6 +1,7 @@
 "use client"
 
 import type { Subscription } from "@/lib/db/schema"
+import type { Plan } from "@/lib/billing/plan"
 import { cancelSubscription } from "@/app/actions/subscriptions"
 import {
   Calendar,
@@ -8,6 +9,7 @@ import {
   TrendingUp,
   XCircle,
   ExternalLink,
+  Lock,
   MoreHorizontal,
   Activity,
   Zap,
@@ -27,6 +29,7 @@ import { toast } from "sonner"
 import { SubscriptionHistoryDialog } from "./subscription-history-dialog"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { UpgradeDialog } from "@/components/upgrade-dialog"
 
 function formatAmount(cents: number, currency: string): string {
   return (cents / 100).toLocaleString("en-US", {
@@ -71,8 +74,10 @@ function getVendorColor(name: string): string {
 
 export function SubscriptionsTable({
   initialSubscriptions,
+  plan,
 }: {
   initialSubscriptions: Subscription[]
+  plan: Plan
 }) {
   const [isPending, startTransition] = useTransition()
   const [subs, setSubs] = useState<Subscription[]>(
@@ -80,6 +85,7 @@ export function SubscriptionsTable({
   )
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null)
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false)
 
   const handleCancel = (id: string, vendor: string) => {
     startTransition(async () => {
@@ -270,7 +276,7 @@ export function SubscriptionsTable({
                       <Activity className="mr-2 size-4" />
                       View history
                     </DropdownMenuItem>
-                    {cancelUrl && (
+                    {cancelUrl && plan === "pro" && (
                       <DropdownMenuItem asChild>
                         <a
                           href={cancelUrl}
@@ -281,6 +287,15 @@ export function SubscriptionsTable({
                           <ExternalLink className="mr-2 size-4" />
                           Cancel externally
                         </a>
+                      </DropdownMenuItem>
+                    )}
+                    {cancelUrl && plan !== "pro" && (
+                      <DropdownMenuItem
+                        className="text-muted-foreground"
+                        onClick={() => setIsUpgradeOpen(true)}
+                      >
+                        <Lock className="mr-2 size-4" />
+                        Cancel externally (Pro)
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
@@ -314,6 +329,7 @@ export function SubscriptionsTable({
         open={isHistoryOpen}
         onOpenChange={setIsHistoryOpen}
       />
+      <UpgradeDialog open={isUpgradeOpen} onOpenChange={setIsUpgradeOpen} />
     </div>
   )
 }

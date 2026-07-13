@@ -2,10 +2,12 @@ import { getDeviceTokens } from "@/app/actions/device-tokens"
 import { DeviceTokensCard } from "@/components/device-tokens-card"
 import { GmailCard } from "@/components/gmail-card"
 import { NotificationPreferencesCard } from "@/components/notification-preferences-card"
+import { BillingCard } from "@/components/billing-card"
 import { db } from "@/lib/db"
 import { gmailConnections } from "@/lib/db/schema"
 import { isGmailConfigured } from "@/lib/pipeline/sources/gmail"
 import { getSession } from "@/lib/session"
+import { getUserPlan } from "@/lib/billing/plan"
 import { eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { getBankConnections } from "@/app/actions/bank"
@@ -23,6 +25,7 @@ export default async function SettingsPage() {
 
   const tokens = await getDeviceTokens()
   const bankConns = await getBankConnections()
+  const plan = await getUserPlan(session.user.id)
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,8 +35,9 @@ export default async function SettingsPage() {
           Connections and capture devices.
         </p>
       </div>
+      <BillingCard />
       <GmailCard configured={isGmailConfigured()} connection={connection ?? null} />
-      <BankConnectionCard connections={bankConns} />
+      <BankConnectionCard connections={bankConns} plan={plan} />
       <NotificationPreferencesCard />
       <DeviceTokensCard tokens={tokens} />
     </div>

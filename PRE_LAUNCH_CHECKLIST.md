@@ -43,3 +43,20 @@ Manually trigger each cron route once against production to confirm it works bef
 curl -H "Authorization: Bearer <real CRON_SECRET>" https://<your-domain>/api/cron/renewal-alerts
 curl -H "Authorization: Bearer <real CRON_SECRET>" https://<your-domain>/api/cron/weekly-digest
 ```
+
+## 4. Razorpay billing (Phase 3)
+
+`.env` only has placeholder Razorpay values — real billing does not work until this is done. The account is currently **INR-only** (international payments pending approval), so the Plan below is created in INR; the UI shows the USD-equivalent price (`lib/billing/pricing.ts`).
+
+- Razorpay dashboard → switch out of test mode when ready → **Subscriptions → Plans → Create Plan**: recurring, INR, ₹999/month. Copy the Plan id.
+- Razorpay dashboard → **Settings → API Keys** → generate live `Key Id` / `Key Secret`.
+- Razorpay dashboard → **Settings → Webhooks** → add endpoint `https://<your-domain>/api/billing/webhook`, subscribe to `subscription.activated`, `subscription.charged`, `subscription.pending`, `subscription.halted`, `subscription.cancelled`, `subscription.completed`. Copy the webhook secret.
+- Set these in Vercel **Settings → Environment Variables** (Production):
+  - `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` — live keys from above
+  - `RAZORPAY_WEBHOOK_SECRET` — from the webhook you just created
+  - `RAZORPAY_PLAN_ID` — the live Plan id
+  - `NEXT_PUBLIC_RAZORPAY_KEY_ID` — same value as `RAZORPAY_KEY_ID` (this one is exposed client-side by design, used by Checkout.js)
+- Test the flow once with a real card in live mode (small real charge) — confirm `billing.status` flips to `active` in the DB after the webhook fires, and Pro features unlock.
+- When international payments are approved: create a USD Plan in Razorpay, swap `RAZORPAY_PLAN_ID` in Vercel to its id, and update the `usd`/`inrNote` copy in `lib/billing/pricing.ts`. No other code changes needed.
+
+⚠️ Do not add live Razorpay keys to the committed `.env` file — it's tracked in git. Use Vercel env vars only.
