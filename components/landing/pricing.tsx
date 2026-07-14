@@ -1,41 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { PRO_PRICE } from '@/lib/billing/pricing'
-
-const plans = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: '/mo',
-    description: 'Scan every inbox and see exactly what your subscriptions are costing you.',
-    features: [
-      'Unlimited Gmail scanning',
-      'Full spend analytics & trend chart',
-      'Total savings + leak count, always visible',
-      'Top money leak in full detail',
-    ],
-    featured: false,
-    cta: 'Get started free',
-  },
-  {
-    name: 'Pro',
-    price: PRO_PRICE.usd,
-    period: '/mo',
-    note: PRO_PRICE.inrNote,
-    description: 'Unlock every leak and act on it in one click.',
-    features: [
-      'Every money leak, fully broken down',
-      'One-click cancellation links',
-      'Renewal alert emails',
-      'Full weekly digest (not just a teaser)',
-      'Bank-linked stealth subscription detection',
-      'CSV export',
-    ],
-    featured: true,
-    cta: 'Upgrade to Pro',
-  },
-]
+import { PRO_PRICE, PLANS as plans } from '@/lib/billing/pricing'
 
 export function Pricing() {
   return (

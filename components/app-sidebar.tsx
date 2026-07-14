@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   ReceiptText,
   Radar,
@@ -14,7 +14,6 @@ import {
   User,
   CreditCard,
   ChevronUp,
-  Plug,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -29,6 +28,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ userName, userEmail }: AppSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -97,13 +97,13 @@ export function AppSidebar({ userName, userEmail }: AppSidebarProps) {
       href: "/dashboard/settings",
     },
     {
-      label: "Connections & Devices",
-      icon: Plug,
-      href: "/dashboard/settings",
+      label: "Billing",
+      icon: CreditCard,
+      href: "/dashboard/billing",
     },
     {
       label: "Subscriptions",
-      icon: CreditCard,
+      icon: Radar,
       href: "/dashboard/subscriptions",
     },
   ]
@@ -251,9 +251,11 @@ export function AppSidebar({ userName, userEmail }: AppSidebarProps) {
           {/* Sign Out */}
           <div className="border-t border-border/30 py-1.5">
             <button
-              onClick={() => {
+              onClick={async () => {
                 setProfileOpen(false)
-                signOut()
+                await signOut()
+                router.push("/")
+                router.refresh()
               }}
               className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             >

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { Check, Sparkles } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -12,7 +13,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { PRO_PRICE } from "@/lib/billing/pricing"
+import { PRO_PRICE, PLANS } from "@/lib/billing/pricing"
+
+const PRO_FEATURES = PLANS.find((plan) => plan.tier === "pro")?.features ?? []
 
 declare global {
   interface Window {
@@ -103,26 +106,52 @@ export function UpgradeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="gap-5 overflow-visible sm:max-w-md">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 opacity-50 blur-xl"
+        />
         <DialogHeader>
-          <DialogTitle>Upgrade to PaperTrail Pro</DialogTitle>
-          <DialogDescription>
-            Unlock every money leak, one-click cancel links, renewal alerts, the full
-            weekly digest, bank-linked stealth detection, and CSV export.
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/20">
+              <Sparkles className="size-5 text-primary-foreground" aria-hidden="true" />
+            </div>
+            <DialogTitle className="text-lg">Upgrade to PaperTrail Pro</DialogTitle>
+          </div>
+          <DialogDescription className="sr-only">
+            Unlock every PaperTrail Pro feature
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/50 py-4">
-          <span className="text-2xl font-semibold">{PRO_PRICE.usdPerMonth}</span>
+
+        <ul className="flex flex-col gap-2.5">
+          {PRO_FEATURES.map((feature) => (
+            <li key={feature} className="flex items-start gap-2.5 text-sm">
+              <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="flex flex-col items-center gap-1 rounded-xl border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent py-5">
+          <div className="flex items-baseline gap-1">
+            <span className="text-3xl font-bold tracking-tight">{PRO_PRICE.usd}</span>
+            <span className="text-sm text-muted-foreground">/mo</span>
+          </div>
           <span className="text-xs text-muted-foreground">{PRO_PRICE.inrNote}</span>
         </div>
-        <DialogFooter>
+
+        <DialogFooter className="-mx-0 -mb-0 flex-col gap-2 border-t-0 bg-transparent p-0 sm:flex-col">
           <Button
             onClick={handleUpgrade}
             disabled={isLoading}
-            className="w-full sm:w-auto"
+            className="w-full"
+            size="lg"
           >
             {isLoading ? "Opening checkout..." : "Continue to checkout"}
           </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            Cancel anytime · Secure checkout via Razorpay
+          </p>
         </DialogFooter>
       </DialogContent>
     </Dialog>

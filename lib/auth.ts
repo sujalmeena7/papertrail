@@ -1,5 +1,8 @@
 import { betterAuth } from 'better-auth'
+import { emailOTP } from 'better-auth/plugins/email-otp'
 import { pool } from '@/lib/db'
+import { sendEmail } from '@/lib/email/client'
+import { VerificationCodeEmail } from '@/lib/email/templates/verification-code'
 
 export const auth = betterAuth({
   database: pool,
@@ -13,6 +16,11 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    autoSignInAfterVerification: true,
+    sendOnSignIn: true,
   },
   socialProviders: {
     google: {
@@ -26,6 +34,19 @@ export const auth = betterAuth({
       trustedProviders: ['google'],
     },
   },
+  plugins: [
+    emailOTP({
+      overrideDefaultEmailVerification: true,
+      async sendVerificationOTP({ email, otp, type }) {
+        if (type !== 'email-verification') return
+        await sendEmail({
+          to: email,
+          subject: 'Verify your email',
+          react: VerificationCodeEmail({ code: otp }),
+        })
+      },
+    }),
+  ],
   trustedOrigins: [
     ...(process.env.NODE_ENV === 'development'
       ? ['http://localhost:3000']

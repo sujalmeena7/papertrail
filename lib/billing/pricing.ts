@@ -18,3 +18,57 @@ export const PRO_PRICE = {
   /** Microcopy shown under the USD figure so the INR checkout amount is expected. */
   inrNote: "billed in INR (₹999/mo)",
 } as const
+
+export type PlanTier = "free" | "pro"
+
+export type PlanDisplay = {
+  tier: PlanTier
+  name: string
+  price: string
+  period: string
+  note?: string
+  description: string
+  features: string[]
+  featured: boolean
+  cta: string
+}
+
+// Shared plan copy for the landing pricing section and the in-app billing page.
+// Keep this the single source of truth for feature lists so the two surfaces
+// never drift out of sync.
+export const PLANS: PlanDisplay[] = [
+  {
+    tier: "free",
+    name: "Free",
+    price: "$0",
+    period: "/mo",
+    description:
+      "Scan every inbox and see exactly what your subscriptions are costing you.",
+    features: [
+      "Unlimited Gmail scanning",
+      "Full spend analytics & trend chart",
+      "Total savings + leak count, always visible",
+      "Top money leak in full detail",
+    ],
+    featured: false,
+    cta: "Get started free",
+  },
+  {
+    tier: "pro",
+    name: "Pro",
+    price: PRO_PRICE.usd,
+    period: "/mo",
+    note: PRO_PRICE.inrNote,
+    description: "Unlock every leak and act on it in one click.",
+    features: [
+      "Every money leak, fully broken down",
+      "One-click cancellation links",
+      "Renewal alert emails",
+      "Full weekly digest (not just a teaser)",
+      "Bank-linked stealth subscription detection",
+      "CSV export",
+    ],
+    featured: true,
+    cta: "Upgrade to Pro",
+  },
+]
