@@ -9,7 +9,19 @@
       "Bash(pnpm list *)",
       "Bash(npx --version)",
       "Bash(npx --yes tsx --version)",
-      "Bash(pnpm dlx *)"
+      "Bash(pnpm dlx *)",
+      "Bash(git -C \"c:\\\\Users\\\\meena\\\\Downloads\\\\papertrail-invoice-scraper\" ls-files scratch/ start_claude.bat)",
+      "Bash(git -C \"c:\\\\Users\\\\meena\\\\Downloads\\\\papertrail-invoice-scraper\" rm -r --cached -q scratch/ start_claude.bat)",
+      "Bash(git -C \"c:\\\\Users\\\\meena\\\\Downloads\\\\papertrail-invoice-scraper\" status --short)",
+      "Bash(pnpm build *)",
+      "Bash(node -e ' *)",
+      "Bash(git commit -m ' *)",
+      "Bash(node scripts/_find_user.mjs)",
+      "Bash(node scripts/_send_webhook.mjs subscription.charged fV65GGn1Ax5QkP9USHXSv8UK5P0Ccg0j)",
+      "Bash(node scripts/_check_billing.mjs)",
+      "Bash(node scripts/_send_webhook.mjs subscription.cancelled fV65GGn1Ax5QkP9USHXSv8UK5P0Ccg0j)",
+      "Bash(npx vercel *)",
+      "Bash(pnpm install *)"
     ]
   }
 }

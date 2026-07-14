@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Check, CreditCard } from "lucide-react"
+import { Check, CreditCard, Sparkles } from "lucide-react"
 import type { getBilling } from "@/app/actions/billing"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -57,12 +57,17 @@ export function BillingManager({ initial }: { initial: Billing }) {
       {/* Current plan / status */}
       <Card className="premium-card premium-glow">
         <CardHeader>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <CreditCard className="size-4 text-muted-foreground" aria-hidden="true" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent-foreground shadow-lg shadow-primary/20">
+                <CreditCard className="size-4 text-primary-foreground" aria-hidden="true" />
+              </div>
               <CardTitle className="text-base">Current plan</CardTitle>
             </div>
-            <Badge variant={isPro ? "default" : "outline"}>
+            <Badge
+              variant={isPro ? "default" : "outline"}
+              className={isPro ? "bg-gradient-to-r from-primary to-accent-foreground" : ""}
+            >
               {isPro ? "Pro" : "Free"}
             </Badge>
           </div>
@@ -108,24 +113,44 @@ export function BillingManager({ initial }: { initial: Billing }) {
       <div className="grid gap-4 md:grid-cols-2">
         {PLANS.map((plan) => {
           const isCurrentPlan = plan.tier === billing.plan
+          const isFeatured = plan.featured
           return (
             <Card
               key={plan.tier}
               className={cn(
-                "premium-card flex flex-col",
-                plan.featured && "premium-glow border-primary/50"
+                "premium-card flex flex-col transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/5",
+                isFeatured &&
+                  "premium-glow border-primary/40 bg-gradient-to-b from-primary/[0.04] to-transparent ring-1 ring-primary/10"
               )}
             >
               <CardHeader>
                 <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-base">{plan.name}</CardTitle>
-                  {plan.featured && !isCurrentPlan && (
-                    <Badge variant="default">Most popular</Badge>
+                  <div className="flex items-center gap-2">
+                    {isFeatured && (
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent-foreground shadow-md shadow-primary/20">
+                        <Sparkles className="size-3.5 text-primary-foreground" aria-hidden="true" />
+                      </div>
+                    )}
+                    <CardTitle className="text-base">{plan.name}</CardTitle>
+                  </div>
+                  {isFeatured && !isCurrentPlan && (
+                    <Badge
+                      variant="default"
+                      className="bg-gradient-to-r from-primary to-accent-foreground"
+                    >
+                      Most popular
+                    </Badge>
                   )}
                   {isCurrentPlan && <Badge variant="outline">Current plan</Badge>}
                 </div>
-                <div className="flex items-baseline gap-1 pt-2">
-                  <span className="text-3xl font-semibold tracking-tight">
+                <div className="flex items-baseline gap-1 pt-3">
+                  <span
+                    className={cn(
+                      "text-4xl font-semibold tracking-tight",
+                      isFeatured &&
+                        "bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent"
+                    )}
+                  >
                     {plan.price}
                   </span>
                   <span className="text-sm text-muted-foreground">{plan.period}</span>
@@ -138,20 +163,41 @@ export function BillingManager({ initial }: { initial: Billing }) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-1 flex-col gap-4">
-                <ul className="flex flex-1 flex-col gap-2.5">
+                <div
+                  className={cn(
+                    "h-px w-full",
+                    isFeatured
+                      ? "bg-gradient-to-r from-transparent via-primary/25 to-transparent"
+                      : "bg-border/60"
+                  )}
+                />
+                <ul className="flex flex-1 flex-col gap-3">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2.5 text-sm">
-                      <Check
-                        className="mt-0.5 size-4 shrink-0 text-primary"
-                        aria-hidden="true"
-                      />
+                      <span
+                        className={cn(
+                          "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full",
+                          isFeatured ? "bg-primary/15" : "bg-muted"
+                        )}
+                      >
+                        <Check
+                          className="size-2.5 text-primary"
+                          aria-hidden="true"
+                          strokeWidth={3}
+                        />
+                      </span>
                       <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
                 {plan.tier === "pro" ? (
                   <Button
-                    className="w-full"
+                    className={cn(
+                      "w-full",
+                      isFeatured &&
+                        !isCurrentPlan &&
+                        "bg-gradient-to-r from-primary to-accent-foreground shadow-lg shadow-primary/25 hover:opacity-90"
+                    )}
                     disabled={isCurrentPlan}
                     onClick={() => setUpgradeOpen(true)}
                   >

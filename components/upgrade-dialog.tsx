@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Check, Sparkles } from "lucide-react"
+import { Check, Loader2, Sparkles } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -147,6 +147,7 @@ export function UpgradeDialog({
             className="w-full"
             size="lg"
           >
+            {isLoading && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
             {isLoading ? "Opening checkout..." : "Continue to checkout"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
