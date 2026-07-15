@@ -2,6 +2,7 @@
 
 import type { SubscriptionAlert } from "@/lib/db/schema"
 import { dismissAlert } from "@/app/actions/subscriptions"
+import { AnimatePresence, motion } from "framer-motion"
 import {
   AlertCircle,
   ArrowUpRight,
@@ -117,85 +118,92 @@ export function AlertsList({
         </p>
       </div>
 
-      {alerts.map((alert) => {
-        const details = alert.details as any
-        const config = ALERT_CONFIG[alert.type as keyof typeof ALERT_CONFIG] ?? {
-          icon: AlertCircle,
-          iconColor: "text-muted-foreground",
-          iconBg: "bg-muted",
-          borderColor: "border-l-border",
-          badgeColor: "bg-muted text-muted-foreground",
-          label: "Alert",
-          badge: "Alert",
-        }
-        const Icon = config.icon
+      <AnimatePresence initial={false}>
+        {alerts.map((alert) => {
+          const details = alert.details as any
+          const config = ALERT_CONFIG[alert.type as keyof typeof ALERT_CONFIG] ?? {
+            icon: AlertCircle,
+            iconColor: "text-muted-foreground",
+            iconBg: "bg-muted",
+            borderColor: "border-l-border",
+            badgeColor: "bg-muted text-muted-foreground",
+            label: "Alert",
+            badge: "Alert",
+          }
+          const Icon = config.icon
 
-        let description = "Action needed on a subscription."
+          let description = "Action needed on a subscription."
 
-        if (alert.type === "price_hike") {
-          const prev = formatAmount(details.previousAmountCents)
-          const curr = formatAmount(details.newAmountCents)
-          description = `Amount increased ${details.increasePercentage}% — from ${prev} to ${curr}.`
-        } else if (alert.type === "missed_renewal") {
-          description = `Expected ${details.daysOverdue} days ago on ${details.expectedDate}. Did you cancel?`
-        } else if (alert.type === "duplicate") {
-          const vendor = details.vendorNormalized || "a vendor"
-          description = `${details.chargesInMonth} charges from "${vendor}" in ${details.month}.`
-        } else if (alert.type === "redundant_tool") {
-          const vendorsList = Array.isArray(details.vendors)
-            ? details.vendors.join(", ")
-            : "multiple tools"
-          description = `Multiple "${details.category}" tools: ${vendorsList}. Consider consolidating.`
-        } else if (alert.type === "zombie") {
-          description = `Appears unused. ${details.reason} (~$${(details.monthlyCostCents / 100).toFixed(2)}/mo wasted)`
-        }
+          if (alert.type === "price_hike") {
+            const prev = formatAmount(details.previousAmountCents)
+            const curr = formatAmount(details.newAmountCents)
+            description = `Amount increased ${details.increasePercentage}% — from ${prev} to ${curr}.`
+          } else if (alert.type === "missed_renewal") {
+            description = `Expected ${details.daysOverdue} days ago on ${details.expectedDate}. Did you cancel?`
+          } else if (alert.type === "duplicate") {
+            const vendor = details.vendorNormalized || "a vendor"
+            description = `${details.chargesInMonth} charges from "${vendor}" in ${details.month}.`
+          } else if (alert.type === "redundant_tool") {
+            const vendorsList = Array.isArray(details.vendors)
+              ? details.vendors.join(", ")
+              : "multiple tools"
+            description = `Multiple "${details.category}" tools: ${vendorsList}. Consider consolidating.`
+          } else if (alert.type === "zombie") {
+            description = `Appears unused. ${details.reason} (~$${(details.monthlyCostCents / 100).toFixed(2)}/mo wasted)`
+          }
 
-        return (
-          <div
-            key={alert.id}
-            className="group flex items-start gap-4 rounded-xl border border-border/50 border-l-2 bg-card/60 backdrop-blur-sm px-5 py-4 transition-all"
-            style={{
-              borderLeftColor: config.borderColor
-                .replace("border-l-", "")
-                .replace("/", " / "),
-            }}
-          >
-            {/* Icon */}
-            <div
-              className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${config.iconBg} mt-0.5`}
+          return (
+            <motion.div
+              key={alert.id}
+              layout
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: 24, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="group flex items-start gap-4 overflow-hidden rounded-xl border border-border/50 border-l-2 bg-card/60 backdrop-blur-sm px-5 py-4"
+              style={{
+                borderLeftColor: config.borderColor
+                  .replace("border-l-", "")
+                  .replace("/", " / "),
+              }}
             >
-              <Icon className={`size-4 ${config.iconColor}`} />
-            </div>
-
-            {/* Body */}
-            <div className="flex flex-1 flex-col gap-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-semibold">{config.label}</span>
-                <span
-                  className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${config.badgeColor}`}
-                >
-                  {config.badge}
-                </span>
+              {/* Icon */}
+              <div
+                className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${config.iconBg} mt-0.5`}
+              >
+                <Icon className={`size-4 ${config.iconColor}`} />
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {description}
-              </p>
-            </div>
 
-            {/* Dismiss */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground"
-              disabled={isPending}
-              onClick={() => handleDismiss(alert.id)}
-            >
-              <X className="size-3.5" />
-              <span className="sr-only">Dismiss</span>
-            </Button>
-          </div>
-        )
-      })}
+              {/* Body */}
+              <div className="flex flex-1 flex-col gap-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-semibold">{config.label}</span>
+                  <span
+                    className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${config.badgeColor}`}
+                  >
+                    {config.badge}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {description}
+                </p>
+              </div>
+
+              {/* Dismiss */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground"
+                disabled={isPending}
+                onClick={() => handleDismiss(alert.id)}
+              >
+                <X className="size-3.5" />
+                <span className="sr-only">Dismiss</span>
+              </Button>
+            </motion.div>
+          )
+        })}
+      </AnimatePresence>
     </div>
   )
 }

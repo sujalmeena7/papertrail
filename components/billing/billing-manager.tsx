@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { motion } from "framer-motion"
 import { Check, CreditCard, Sparkles } from "lucide-react"
 import type { getBilling } from "@/app/actions/billing"
 import { Badge } from "@/components/ui/badge"
@@ -53,8 +54,17 @@ export function BillingManager({ initial }: { initial: Billing }) {
     : null
 
   return (
-    <div className="flex flex-col gap-6">
+    <motion.div
+      className="flex flex-col gap-6"
+      initial="hidden"
+      animate="show"
+      variants={{ show: { transition: { staggerChildren: 0.08 } } }}
+    >
       {/* Current plan / status */}
+      <motion.div
+        variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      >
       <Card className="premium-card premium-glow">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
@@ -108,6 +118,7 @@ export function BillingManager({ initial }: { initial: Billing }) {
           </p>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Plan comparison */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -115,10 +126,15 @@ export function BillingManager({ initial }: { initial: Billing }) {
           const isCurrentPlan = plan.tier === billing.plan
           const isFeatured = plan.featured
           return (
-            <Card
+            <motion.div
               key={plan.tier}
+              variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ y: -4 }}
+            >
+            <Card
               className={cn(
-                "premium-card flex flex-col transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/5",
+                "premium-card flex h-full flex-col shadow-none transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/5",
                 isFeatured &&
                   "premium-glow border-primary/40 bg-gradient-to-b from-primary/[0.04] to-transparent ring-1 ring-primary/10"
               )}
@@ -210,11 +226,12 @@ export function BillingManager({ initial }: { initial: Billing }) {
                 )}
               </CardContent>
             </Card>
+            </motion.div>
           )
         })}
       </div>
 
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
-    </div>
+    </motion.div>
   )
 }

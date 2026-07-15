@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm"
 
 import { Dashboard } from "@/components/dashboard"
 import { getSession } from "@/lib/session"
+import { getUserPlan } from "@/lib/billing/plan"
 import { redirect } from "next/navigation"
 
 export default async function HomePage() {
@@ -13,7 +14,7 @@ export default async function HomePage() {
   if (!session?.user) redirect("/sign-in")
 
   // Run ALL data fetches in parallel — including subscription analysis
-  const [paginated, analytics, scans, connectionCount, subscriptions, subscriptionAlertsList, analysisResult] = await Promise.all([
+  const [paginated, analytics, scans, connectionCount, subscriptions, subscriptionAlertsList, analysisResult, plan] = await Promise.all([
     getReceiptsPaginated(0),
     getAnalytics(),
     getScans(),
@@ -24,6 +25,7 @@ export default async function HomePage() {
     getSubscriptions(),
     getSubscriptionAlerts(),
     triggerSubscriptionAnalysis().catch(() => ({ status: "error" as const, newAlerts: 0 })),
+    getUserPlan(session.user.id),
   ])
 
   const isGmailConnected = connectionCount > 0
@@ -38,6 +40,7 @@ export default async function HomePage() {
       subscriptions={subscriptions}
       subscriptionAlerts={subscriptionAlertsList}
       newAlertCount={analysisResult.newAlerts}
+      isPro={plan === "pro"}
     />
   )
 }
