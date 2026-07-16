@@ -38,7 +38,12 @@ export const auth = betterAuth({
     emailOTP({
       overrideDefaultEmailVerification: true,
       async sendVerificationOTP({ email, otp, type }) {
-        if (type !== 'email-verification') return
+        // Send the code for both the sign-up verification path
+        // (type: 'email-verification') and the auto sign-in path that fires on
+        // sign-up via autoSignIn + sendOnSignIn (type: 'sign-in'). Previously we
+        // only allowed 'email-verification', so the very first OTP on sign-up was
+        // silently dropped and users had to hit "Resend" to get a code.
+        if (type === 'forget-password') return
         await sendEmail({
           to: email,
           subject: 'Verify your email',
