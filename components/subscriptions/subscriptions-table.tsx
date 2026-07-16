@@ -8,14 +8,11 @@ import {
   TrendingDown,
   TrendingUp,
   XCircle,
-  ExternalLink,
-  Lock,
+  ShieldCheck,
   MoreHorizontal,
   Activity,
-  Zap,
   Minus,
 } from "lucide-react"
-import { getCancelUrl } from "@/lib/subscriptions/vendors"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,9 +24,9 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { SubscriptionHistoryDialog } from "./subscription-history-dialog"
+import { CancellationPlaybookDialog } from "./cancellation-playbook-dialog"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { UpgradeDialog } from "@/components/upgrade-dialog"
 
 function formatAmount(cents: number, currency: string): string {
   return (cents / 100).toLocaleString("en-US", {
@@ -85,7 +82,8 @@ export function SubscriptionsTable({
   )
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null)
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
-  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false)
+  const [playbookSub, setPlaybookSub] = useState<Subscription | null>(null)
+  const [isPlaybookOpen, setIsPlaybookOpen] = useState(false)
 
   const handleCancel = (id: string, vendor: string) => {
     startTransition(async () => {
@@ -158,7 +156,6 @@ export function SubscriptionsTable({
           const isTrendingUp = sub.currentAmountCents > sub.averageAmountCents
           const isTrendingDown = sub.currentAmountCents < sub.averageAmountCents
           const monthly = monthlyEquivalent(sub)
-          const cancelUrl = getCancelUrl(sub.vendorNormalized)
 
           const daysUntilNext = sub.nextExpectedDate
             ? Math.ceil(
@@ -276,28 +273,15 @@ export function SubscriptionsTable({
                       <Activity className="mr-2 size-4" />
                       View history
                     </DropdownMenuItem>
-                    {cancelUrl && plan === "pro" && (
-                      <DropdownMenuItem asChild>
-                        <a
-                          href={cancelUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center"
-                        >
-                          <ExternalLink className="mr-2 size-4" />
-                          Cancel externally
-                        </a>
-                      </DropdownMenuItem>
-                    )}
-                    {cancelUrl && plan !== "pro" && (
-                      <DropdownMenuItem
-                        className="text-muted-foreground"
-                        onClick={() => setIsUpgradeOpen(true)}
-                      >
-                        <Lock className="mr-2 size-4" />
-                        Cancel externally (Pro)
-                      </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setPlaybookSub(sub)
+                        setIsPlaybookOpen(true)
+                      }}
+                    >
+                      <ShieldCheck className="mr-2 size-4" />
+                      Cancellation guide
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => handleCancel(sub.id, sub.vendorNormalized)}
@@ -329,7 +313,13 @@ export function SubscriptionsTable({
         open={isHistoryOpen}
         onOpenChange={setIsHistoryOpen}
       />
-      <UpgradeDialog open={isUpgradeOpen} onOpenChange={setIsUpgradeOpen} />
+      <CancellationPlaybookDialog
+        subscription={playbookSub}
+        plan={plan}
+        open={isPlaybookOpen}
+        onOpenChange={setIsPlaybookOpen}
+        onCancelled={(id) => setSubs((prev) => prev.filter((s) => s.id !== id))}
+      />
     </div>
   )
 }
