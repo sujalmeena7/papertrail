@@ -158,7 +158,8 @@ export function CancellationPlaybookDialog({
           )}
         >
           <ExternalLink className="size-4" />
-          Open {subscription.vendorNormalized} cancellation page
+          Open <span className="capitalize">{subscription.vendorNormalized}</span>{" "}
+          cancellation page
         </a>
       ) : (
         <div className="flex items-start gap-2.5 rounded-xl border border-border/60 bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
