@@ -11,6 +11,7 @@ import { eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { getBankConnections } from "@/app/actions/bank"
 import { BankConnectionCard } from "@/components/bank-connection-card"
+import { DeleteAccountCard } from "@/components/delete-account-card"
 
 export default async function SettingsPage() {
   const session = await getSession()
@@ -38,6 +39,7 @@ export default async function SettingsPage() {
       <BankConnectionCard connections={bankConns} plan={plan} />
       <NotificationPreferencesCard />
       <DeviceTokensCard tokens={tokens} />
+      <DeleteAccountCard plan={plan} />
     </div>
   )
 }
