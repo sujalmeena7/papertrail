@@ -16,9 +16,17 @@ pull`, dashboard, API) — that's expected and correct, not a sign they're missi
 vars from a `vercel env pull` result; a Sensitive var reads back as `""` even when it's set correctly. If you
 need to confirm a value is real, check with the user or trigger the actual flow (e.g. a test webhook) instead.
 
-## 1. Verify a real domain in Resend
+## 1. Verify a real domain in Resend — DONE (2026-07-16)
 
-Currently `EMAIL_FROM` uses Resend's shared test domain (`onboarding@resend.dev`), which only delivers to the email address you signed up to Resend with. Real users won't receive anything until this is fixed.
+`subtrace.app` is verified in Resend and `EMAIL_FROM="Papertrail <noreply@subtrace.app>"` is live in both
+`.env` and Vercel production. OTP and alert emails now deliver to any real address (previously the shared
+`onboarding@resend.dev` sender only delivered to the Resend account owner's own inbox).
+
+⚠️ Reminder: saving an env var in Vercel does NOT update the running deployment — a redeploy is required for a
+new `EMAIL_FROM`/`RESEND_API_KEY` value to take effect.
+
+<details>
+<summary>Original setup steps (for reference)</summary>
 
 - Resend dashboard → **Domains** → **Add Domain** → enter a domain you own.
 - Add the DNS records (SPF/DKIM) Resend gives you, at your domain registrar.
@@ -27,6 +35,7 @@ Currently `EMAIL_FROM` uses Resend's shared test domain (`onboarding@resend.dev`
   ```
   EMAIL_FROM="PaperTrail <alerts@yourdomain.com>"
   ```
+</details>
 
 ## 2. Deploy to Vercel
 
@@ -68,3 +77,31 @@ Remaining:
 - When international payments are approved: create a USD Plan in Razorpay, swap `RAZORPAY_PLAN_ID` in Vercel to its id, and update the `usd`/`inrNote` copy in `lib/billing/pricing.ts`. No other code changes needed.
 
 ⚠️ Do not add live Razorpay keys to the committed `.env` file — it's tracked in git. Use Vercel env vars only.
+
+## 5. Google OAuth verification for Gmail (BLOCKER for public users)
+
+**Symptom:** signing in / connecting Gmail with any account that isn't a registered test user shows
+`Access blocked: papertrail-invoice.vercel.app has not completed the Google verification process` →
+`Error 403: access_denied`. This is a Google Cloud console configuration state, NOT an app bug.
+
+**Why:** the OAuth consent screen is in **Testing** mode, so only explicitly-added test users can authorize.
+On top of that, Gmail reading uses the **`gmail.readonly`** scope, which Google classifies as a **restricted**
+scope — so before *any* non-test user can connect, the app must pass Google's full verification (including a
+CASA security assessment).
+
+### Interim (works today, free) — add test users
+Google Cloud Console → **APIs & Services → OAuth consent screen** (newer console: **Google Auth Platform →
+Audience**) → **Test users** → **+ Add users** → add every Gmail you test with. Limit 100. Takes effect within
+a minute. Use this while still building.
+
+### Before public launch — verify + publish (do NOT skip, or real users can't connect Gmail)
+1. Fill out the OAuth consent screen completely: app name, logo, homepage URL, **authorized domain**, and a
+   hosted **privacy policy URL** + **terms URL** (Google requires these to be live pages — build them on
+   `papertrail-invoice.vercel.app` before submitting).
+2. Set publishing status → **In production**.
+3. **Submit for verification.** Because `gmail.readonly` is restricted, this triggers a **security assessment
+   (CASA)** — can take multiple weeks and may cost money. Start this well ahead of launch; it is the
+   longest-lead-time item on this checklist.
+
+Deferred until the user explicitly decides to start it. Same item as the "Google OAuth verification for
+`gmail.readonly`" note in project memory.
