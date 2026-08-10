@@ -1,19 +1,27 @@
-# 📄 Papertrail (subtrace.app)
+<p align="center">
+  <a href="https://subtrace.app">
+    <img src="brand/papertrail-logo-120.svg" width="108" height="108" alt="Papertrail Logo" style="border-radius: 24px;">
+  </a>
+</p>
 
-> **Automated AI-Powered Invoice & Subscription Tracker**  
-> Effortlessly parse invoices, monitor recurring SaaS subscriptions, scan Gmail receipts, scrape vendor billing dashboards, and get smart renewal alerts before charges land.
+<h1 align="center">Papertrail</h1>
 
----
+<p align="center">
+  <b>Automated AI-Powered Invoice & Subscription Tracker</b><br>
+  Effortlessly parse invoices, monitor recurring SaaS subscriptions, scan Gmail receipts, scrape vendor billing dashboards, and get smart renewal alerts before charges land.
+</p>
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38BDF8?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
-[![Drizzle ORM](https://img.shields.io/badge/Drizzle_ORM-0.45-C5F74F?style=for-the-badge&logo=drizzle)](https://orm.drizzle.team/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-4169E1?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
-[![Better Auth](https://img.shields.io/badge/Better_Auth-1.6-purple?style=for-the-badge)](https://better-auth.com/)
+<p align="center">
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" alt="Next.js"></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react" alt="React"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript"></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-v4-38BDF8?style=for-the-badge&logo=tailwindcss" alt="Tailwind CSS"></a>
+  <a href="https://orm.drizzle.team/"><img src="https://img.shields.io/badge/Drizzle_ORM-0.45-C5F74F?style=for-the-badge&logo=drizzle" alt="Drizzle ORM"></a>
+  <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-DB-4169E1?style=for-the-badge&logo=postgresql" alt="PostgreSQL"></a>
+  <a href="https://better-auth.com/"><img src="https://img.shields.io/badge/Better_Auth-1.6-purple?style=for-the-badge" alt="Better Auth"></a>
+</p>
 
----
+<hr>
 
 ## 🌟 Overview
 
@@ -226,6 +234,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
-<p center align="center">
+<p align="center">
   Built with ❤️ by <a href="https://github.com/sujalmeena7">sujalmeena7</a>
 </p>
