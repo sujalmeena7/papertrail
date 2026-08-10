@@ -1,9 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
-  <rect width="120" height="120" rx="26" fill="#2c47d7"/>
-  <g transform="translate(60 60) scale(5.2) translate(-8.5 -8)"
-     fill="none" stroke="#ffffff" stroke-width="1.6"
-     stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 2h6l3 3v9H4z"/>
-    <path d="M10 2v3h3"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+  </defs>
+
+  <!-- Blue Squircle Background -->
+  <rect width="120" height="120" rx="30" fill="url(#blueGrad)" />
+
+  <!-- Document Outer Outline -->
+  <path d="M 38 28 L 66 28 L 82 44 L 82 86 C 82 89.3 79.3 92 76 92 L 44 92 C 40.7 92 38 89.3 38 86 Z"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-width="7.5"
+        stroke-linecap="round"
+        stroke-linejoin="round" />
+
+  <!-- Folded Top-Right Flap Line -->
+  <path d="M 66 28 L 66 44 L 82 44"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-width="7.5"
+        stroke-linecap="round"
+        stroke-linejoin="round" />
 </svg>
