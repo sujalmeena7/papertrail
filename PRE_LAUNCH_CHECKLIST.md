@@ -110,6 +110,27 @@ Deferred until the user explicitly decides to start it. Same item as the "Google
 requires are up: `https://subtrace.app/privacy`, `/terms`, `/security`. Set the consent screen's home page,
 privacy policy, terms, and authorized domain to `subtrace.app` (not the Vercel domain) before submitting.
 
+### Pre-submission fixes done 2026-08-11 (commit `09b6183`)
+
+Two things a CASA assessor would have failed the app on, both now live:
+
+1. **OpenAI was an undisclosed subprocessor.** `lib/pipeline/classify.ts` sends the sender, subject, date,
+   attachment names, and the first 6,000 chars of each candidate email body to the OpenAI API for field
+   extraction. The policy only claimed Google data isn't used to train AI models — true, but silent about the
+   transfer itself. `/privacy` now has an **Automated extraction (AI processing)** section naming OpenAI and
+   stating what is sent, plus a complete subprocessor list (Neon, Vercel, OpenAI, Resend, Razorpay, Plaid)
+   replacing the old vague "such as" sentence. **If a new third party ever touches email content, this list
+   must be updated in the same commit** — that's the disclosure Google checks.
+2. **Disconnect didn't revoke.** `disconnectGmail()` deleted the token row but never called Google, so the app
+   stayed on the user's Google permissions page. `deleteAccount()` had the same gap. Both now call
+   `revokeGmailAccess()` (`lib/gmail/revoke.ts`) first — best effort, never throws, so a Google outage can't
+   block a local disconnect. Note this revokes the whole grant for the OAuth client, so a user who also signs
+   in with Google may see the consent screen again on their next sign-in. Expected.
+
+Remaining before submitting: update consent-screen branding to `subtrace.app`, verify domain ownership in
+Search Console, record the demo video (the disconnect shot now genuinely shows the app disappearing from
+Google's permissions page), submit.
+
 ## 6. Cut over to the custom domain `subtrace.app` — DONE (2026-08-11)
 
 `https://subtrace.app` is live and is now the canonical origin. Verified after cutover: sign-up + OTP email,
@@ -144,10 +165,10 @@ silently changed depending on which hostname the user arrived on; it is now pinn
 - `PRODUCTION_ORIGINS` in `lib/auth.ts` still lists `https://papertrail-invoice.vercel.app`. Harmless — it
   only widens the trusted-origin set — but it can be dropped once the Vercel domain is fully retired.
 
-**Still pointing at the old domain — check before launch:** the Razorpay webhook (Razorpay Dashboard →
-Settings → Webhooks) may still be registered against `https://papertrail-invoice.vercel.app/api/billing/webhook`.
-It keeps working while that domain is attached, but should be moved to `https://subtrace.app/api/billing/webhook`
-so billing isn't coupled to a domain being retired.
+**Still pointing at the old domain — check before launch:** the Razorpay webhook was moved by the user on
+2026-08-11 to `https://subtrace.app/api/billing/webhook` and verified rejecting unsigned and bad-signature
+POSTs with `401 Invalid signature`. (That proves the route validates; it does not prove
+`RAZORPAY_WEBHOOK_SECRET` in Vercel matches Razorpay's — only a real event does that.)
 
 Existing sessions issued on the Vercel domain did not carry over — cookies are host-scoped, so everyone
 signed in at cutover was signed out once. Expected, not a bug.
