@@ -1,4 +1,5 @@
 import { and, eq, gte, lte, sql } from "drizzle-orm"
+import { getAppUrl } from "@/lib/app-url"
 import { db } from "@/lib/db"
 import {
   billing,
@@ -72,8 +73,7 @@ export async function sendRenewalAlerts(): Promise<{
 
   const alreadySent = new Set(recentWindows.map((r) => r.subscriptionId))
 
-  const APP_URL =
-    process.env.BETTER_AUTH_URL || "http://localhost:3000"
+  const APP_URL = getAppUrl()
 
   let sent = 0
   let skipped = 0

@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm"
+import { getAppUrl } from "@/lib/app-url"
 import { db } from "@/lib/db"
 import {
   billing,
@@ -61,7 +62,7 @@ export async function sendWeeklyDigests(): Promise<{
     alertsByUser.set(alert.userId, list)
   }
 
-  const APP_URL = process.env.BETTER_AUTH_URL || "http://localhost:3000"
+  const APP_URL = getAppUrl()
 
   let sent = 0
   let skipped = 0

@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth"
+import { getAppUrl } from "@/lib/app-url"
 import { db } from "@/lib/db"
 import { gmailConnections } from "@/lib/db/schema"
 import { encrypt } from "@/lib/encryption"
@@ -42,7 +43,9 @@ export async function GET(request: Request) {
     return new Response("Missing OAuth credentials", { status: 500 })
   }
 
-  const redirectUri = `${url.origin}/api/gmail/callback`
+  // Must be byte-identical to the redirect_uri the connect route sent, or
+  // Google rejects the exchange with redirect_uri_mismatch.
+  const redirectUri = `${getAppUrl()}/api/gmail/callback`
 
   // Exchange code for tokens
   const tokenRes = await fetch("https://oauth2.googleapis.com/token", {

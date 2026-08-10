@@ -95,9 +95,9 @@ Audience**) → **Test users** → **+ Add users** → add every Gmail you test 
 a minute. Use this while still building.
 
 ### Before public launch — verify + publish (do NOT skip, or real users can't connect Gmail)
-1. Fill out the OAuth consent screen completely: app name, logo, homepage URL, **authorized domain**, and a
-   hosted **privacy policy URL** + **terms URL** (Google requires these to be live pages — build them on
-   `papertrail-invoice.vercel.app` before submitting).
+1. Fill out the OAuth consent screen completely: app name, logo, homepage URL (`https://subtrace.app`),
+   **authorized domain** (`subtrace.app`), and the hosted **privacy policy** (`https://subtrace.app/privacy`)
+   + **terms** (`https://subtrace.app/terms`) URLs. All of these pages are live as of 2026-08-11.
 2. Set publishing status → **In production**.
 3. **Submit for verification.** Because `gmail.readonly` is restricted, this triggers a **security assessment
    (CASA)** — can take multiple weeks and may cost money. Start this well ahead of launch; it is the
@@ -105,3 +105,49 @@ a minute. Use this while still building.
 
 Deferred until the user explicitly decides to start it. Same item as the "Google OAuth verification for
 `gmail.readonly`" note in project memory.
+
+**Section 6 (custom domain) is DONE — this is now unblocked.** `subtrace.app` is live, and the pages Google
+requires are up: `https://subtrace.app/privacy`, `/terms`, `/security`. Set the consent screen's home page,
+privacy policy, terms, and authorized domain to `subtrace.app` (not the Vercel domain) before submitting.
+
+## 6. Cut over to the custom domain `subtrace.app` — DONE (2026-08-11)
+
+`https://subtrace.app` is live and is now the canonical origin. Verified after cutover: sign-up + OTP email,
+Google sign-in, and Gmail connect all working on the new domain.
+
+**How it is wired.** Every absolute URL — Better Auth `baseURL` + `trustedOrigins`, the Gmail OAuth
+`redirect_uri`, and links in outbound email — resolves through `getAppUrl()` in `lib/app-url.ts`, which reads
+**`BETTER_AUTH_URL`**. Previously the Gmail redirect URI was derived from the incoming request's host, so it
+silently changed depending on which hostname the user arrived on; it is now pinned to the canonical origin.
+
+**Final state:**
+
+- **DNS** — registrar is Spaceship, nameservers `launch1/launch2.spaceship.net`. A record `@` →
+  `216.198.79.1` (Vercel's current apex IP; the legacy `76.76.21.21` also still works). Nameservers were
+  deliberately NOT moved to Vercel — the Resend DKIM/SPF/DMARC records live on Spaceship, and moving them
+  would break outbound email until every record was recreated.
+- **Vercel** — `subtrace.app` and `papertrail-invoice.vercel.app` both attached to Production. Apex is
+  canonical; the "redirect apex to www" option was declined.
+- **`BETTER_AUTH_URL`** — `https://subtrace.app`, **Production only** (Preview left unset so preview deploys
+  keep resolving to their own generated URL).
+- **Google OAuth client** — JS origin `https://subtrace.app`; redirect URIs
+  `https://subtrace.app/api/gmail/callback` and `https://subtrace.app/api/auth/callback/google`. The old
+  `papertrail-invoice.vercel.app` URIs were **deleted**, so OAuth no longer works on the Vercel domain even
+  though it still serves the app. Test only on `subtrace.app`.
+
+**Known gaps, both intentional:**
+
+- `www.subtrace.app` does not exist in DNS — typing it gives "site can't be reached". Apex-only was a
+  deliberate choice. To add later: attach `www.subtrace.app` in Vercel as a **308 redirect to
+  `subtrace.app`** (not "connect to environment", which would serve it as a second independent host), then
+  add the `CNAME www → cname.vercel-dns.com` record at Spaceship. Both halves are required.
+- `PRODUCTION_ORIGINS` in `lib/auth.ts` still lists `https://papertrail-invoice.vercel.app`. Harmless — it
+  only widens the trusted-origin set — but it can be dropped once the Vercel domain is fully retired.
+
+**Still pointing at the old domain — check before launch:** the Razorpay webhook (Razorpay Dashboard →
+Settings → Webhooks) may still be registered against `https://papertrail-invoice.vercel.app/api/billing/webhook`.
+It keeps working while that domain is attached, but should be moved to `https://subtrace.app/api/billing/webhook`
+so billing isn't coupled to a domain being retired.
+
+Existing sessions issued on the Vercel domain did not carry over — cookies are host-scoped, so everyone
+signed in at cutover was signed out once. Expected, not a bug.

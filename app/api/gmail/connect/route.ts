@@ -1,9 +1,10 @@
 import { auth } from "@/lib/auth"
+import { getAppUrl } from "@/lib/app-url"
 import { headers, cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { randomBytes } from "crypto"
 
-export async function GET(request: Request) {
+export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) {
     return redirect("/sign-in")
@@ -14,8 +15,10 @@ export async function GET(request: Request) {
     return new Response("Missing GOOGLE_CLIENT_ID", { status: 500 })
   }
 
-  const url = new URL(request.url)
-  const redirectUri = `${url.origin}/api/gmail/callback`
+  // Pinned to the canonical origin rather than the request's, so the value
+  // always matches a redirect URI registered in Google Cloud Console and always
+  // matches the one the callback sends during the token exchange.
+  const redirectUri = `${getAppUrl()}/api/gmail/callback`
 
   const state = randomBytes(32).toString("hex")
   const cookieStore = await cookies()
