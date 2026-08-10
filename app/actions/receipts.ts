@@ -8,6 +8,7 @@ import { runScan } from "@/lib/pipeline/scan"
 import { fixtureSource } from "@/lib/pipeline/sources/fixture"
 import { createGmailSource } from "@/lib/pipeline/sources/gmail"
 import { gmailConnections } from "@/lib/db/schema"
+import { revokeGmailAccess } from "@/lib/gmail/revoke"
 import { decrypt, encrypt } from "@/lib/encryption"
 import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -266,6 +267,11 @@ export async function pollLatestScan() {
 
 export async function disconnectGmail() {
   const userId = await getUserId()
+  // Hand the grant back to Google before dropping our copy of the tokens, so
+  // the connection also disappears from the user's Google Account permissions
+  // page. Best effort — revokeGmailAccess never throws, and the delete below is
+  // what actually cuts off our access.
+  await revokeGmailAccess(userId)
   await db.delete(gmailConnections).where(eq(gmailConnections.userId, userId))
   revalidatePath("/settings")
   revalidatePath("/")

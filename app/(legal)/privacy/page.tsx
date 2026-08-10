@@ -14,7 +14,7 @@ export default function PrivacyPage() {
     <article className="flex flex-col">
       <LegalHeader
         title="Privacy Policy"
-        updated="July 16, 2026"
+        updated="August 11, 2026"
         intro="This policy explains what data Papertrail collects, why we collect it, how it is protected, and the controls you have over it — including how our access to your Google account data is used and safeguarded."
       />
 
@@ -38,13 +38,21 @@ export default function PrivacyPage() {
             <>
               <strong>Email content you connect</strong> — when you link a Gmail
               account, we read messages solely to detect and extract receipt and
-              invoice data (vendor, amount, date, invoice number).
+              invoice data (vendor, amount, date, invoice number). We store the
+              extracted fields and the message&rsquo;s subject line; we do not
+              store message bodies or attachments.
             </>,
             <>
               <strong>Subscription &amp; billing data</strong> — the
               subscriptions we detect on your behalf, and your plan status.
               Payments are processed by Razorpay; we never see or store your full
               card details.
+            </>,
+            <>
+              <strong>Bank transaction data</strong> — only if you choose to
+              link a bank account, we receive the transaction list for that
+              account to detect recurring charges. This is optional and
+              independent of Gmail.
             </>,
             <>
               <strong>Usage &amp; device data</strong> — basic logs and device
@@ -65,9 +73,15 @@ export default function PrivacyPage() {
         <LegalList
           items={[
             "We read message contents only to identify and extract receipt/invoice fields. We do not read messages for any other purpose.",
+            "We do not scan your whole mailbox. We ask Gmail only for messages matching a receipt-related search (receipt, invoice, payment, billing, subscription, charged), limited to messages newer than your last scan.",
             "We never sell Google user data, and we never use it for advertising.",
             "We do not use Google user data to train generalized AI/ML models.",
-            "Access can be revoked at any time from your Google Account permissions or by disconnecting Gmail in Papertrail settings.",
+            <>
+              Message content is sent to one third-party provider (OpenAI) purely
+              to extract those fields — see{" "}
+              <strong>Automated extraction</strong> below.
+            </>,
+            "Access can be revoked at any time from your Google Account permissions, or by disconnecting Gmail in Papertrail settings — which deletes our stored tokens and also revokes the grant with Google.",
           ]}
         />
         <p>
@@ -81,6 +95,36 @@ export default function PrivacyPage() {
             Google API Services User Data Policy
           </a>
           , including the Limited Use requirements.
+        </p>
+      </LegalSection>
+
+      <LegalSection heading="Automated extraction (AI processing)">
+        <p>
+          Reading a receipt out of an email is done by a language model, not by a
+          human. For each candidate message, Papertrail sends the sender, subject,
+          date, attachment file names, and up to the first 6,000 characters of the
+          message text to the <strong>OpenAI</strong> API, which returns the
+          structured fields we store: vendor, amount, currency, date, invoice
+          number, and category.
+        </p>
+        <LegalList
+          items={[
+            "OpenAI acts as our processor for this step only. It is the sole third party that receives your email content.",
+            "Per OpenAI's API data usage policy, data submitted through their API is not used to train their models, and is retained for up to 30 days for abuse monitoring before deletion.",
+            "No human at Papertrail reads your messages as part of this process.",
+            "If you never connect Gmail, no email content leaves your inbox and this step never runs.",
+          ]}
+        />
+        <p>
+          You can read OpenAI&rsquo;s commitments for API data at{" "}
+          <a
+            href="https://openai.com/enterprise-privacy/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            openai.com/enterprise-privacy
+          </a>
+          .
         </p>
       </LegalSection>
 
@@ -98,11 +142,41 @@ export default function PrivacyPage() {
       <LegalSection heading="Data sharing">
         <p>
           We do not sell your personal data. We share it only with the service
-          providers required to run Papertrail — such as our database and
-          hosting provider, our email provider (Resend), and our payment
-          processor (Razorpay) — and only to the extent needed to deliver the
-          service. Each is bound to protect your data.
+          providers (subprocessors) required to run Papertrail, and only to the
+          extent needed to deliver the service. Each is bound to protect your
+          data. In full, they are:
         </p>
+        <LegalList
+          items={[
+            <>
+              <strong>Neon</strong> — managed Postgres database where your
+              account, extracted receipt fields, and subscriptions are stored.
+            </>,
+            <>
+              <strong>Vercel</strong> — application hosting and serverless
+              compute.
+            </>,
+            <>
+              <strong>OpenAI</strong> — receipt field extraction. The only
+              subprocessor we send raw message content to; see{" "}
+              <strong>Automated extraction</strong> above.
+            </>,
+            <>
+              <strong>Resend</strong> — transactional email (verification codes,
+              renewal alerts, the weekly digest).
+            </>,
+            <>
+              <strong>Razorpay</strong> — payment processing. We never see or
+              store your full card details.
+            </>,
+            <>
+              <strong>Plaid</strong> — optional bank connection, only if you
+              choose to link an account in Settings. Plaid receives your bank
+              credentials directly; we never see them. No Google user data is
+              shared with Plaid.
+            </>,
+          ]}
+        />
       </LegalSection>
 
       <LegalSection heading="Data retention &amp; deletion">
@@ -113,6 +187,9 @@ export default function PrivacyPage() {
           <a href="/dashboard/settings">Settings → Danger zone</a>. Deletion is
           immediate and irreversible: it removes your receipts, subscriptions,
           connected accounts, and profile, and cancels any active subscription.
+          If Gmail was connected, deleting your account also revokes our OAuth
+          grant with Google, so Papertrail disappears from your Google Account
+          permissions.
         </p>
       </LegalSection>
 

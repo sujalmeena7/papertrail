@@ -22,6 +22,7 @@ import {
 import { eq } from "drizzle-orm"
 import { requireUserId } from "@/lib/session"
 import { getSession } from "@/lib/session"
+import { revokeGmailAccess } from "@/lib/gmail/revoke"
 import { razorpay } from "@/lib/razorpay/client"
 
 // Phrase the user must type to confirm. The client component has its own copy
@@ -72,6 +73,13 @@ export async function deleteAccount(confirmation: string) {
   }
 
   const userEmail = (await getSession())?.user?.email
+
+  // Same reasoning as the Razorpay cancel above, for Gmail: hand the OAuth
+  // grant back to Google before the transaction deletes the tokens it needs to
+  // do so, otherwise Papertrail lingers on the user's Google permissions page
+  // after the account it belonged to no longer exists. Best effort — never
+  // throws, so it can't block deletion.
+  await revokeGmailAccess(userId)
 
   // Delete children before parents to satisfy foreign keys. Wrapped in a
   // transaction so a partial failure never leaves a half-deleted account.
