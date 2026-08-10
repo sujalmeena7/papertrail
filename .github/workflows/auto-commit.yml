@@ -1,0 +1,61 @@
+name: Auto Commit Heatmap Booster
+
+on:
+  schedule:
+    # Runs twice a day (at 00:00 UTC and 12:00 UTC)
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+    inputs:
+      num_commits:
+        description: 'Number of commits to generate'
+        required: false
+        default: '25'
+
+permissions:
+  contents: write
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git User
+        run: |
+          git config --global user.name "sujalmeena7"
+          git config --global user.email "meenasujal60@gmail.com"
+
+      - name: Generate Automated Commits
+        run: |
+          NUM_COMMITS=${{ github.event.inputs.num_commits || '25' }}
+          echo "Generating $NUM_COMMITS commits..."
+
+          MESSAGES=(
+            "chore(activity): sync automated background log"
+            "docs(activity): update contribution activity metrics"
+            "style(activity): refresh daily status timestamp"
+            "refactor(activity): optimize workflow execution record"
+            "ci(activity): append scheduled heartbeat tick"
+            "build(activity): register daily build telemetry update"
+            "test(activity): verify heartbeat ping check"
+            "chore(logs): update project pulse log"
+          )
+
+          for ((i=1; i<=NUM_COMMITS; i++)); do
+            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+            RANDOM_INDEX=$((RANDOM % ${#MESSAGES[@]}))
+            MSG="${MESSAGES[$RANDOM_INDEX]} (#$i)"
+
+            echo "- [$TIMESTAMP] Activity tick #$i - $MSG" >> ACTIVITY.md
+
+            git add ACTIVITY.md
+            git commit -m "$MSG"
+          done
+
+      - name: Push Commits
+        run: |
+          git pull --rebase origin main
+          git push origin main
